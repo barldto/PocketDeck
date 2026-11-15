@@ -207,6 +207,7 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
     }
     // A slash is sometimes read as 7 or 1 in tiny collector numbers. This is only weak evidence.
     for(const m of raw.matchAll(/(?<![0-9])([0-9]{3})[71]([0-9]{3})(?![0-9])/g))result.push({numerator:number(m[1]),denominator:number(m[2]),inferred:true});
+    for(const line of raw.split(/\r?\n/)){const trimmed=line.trim(),m=trimmed.match(/^([0-9]{1,3})\s+([0-9]{2,3})$/);if(m)result.push({numerator:number(m[1]),denominator:number(m[2]),inferred:true});if(/^[0-9]{4,6}$/.test(trimmed)){for(let split=1;split<=3;split++){const remainder=trimmed.length-split;if(remainder>=2&&remainder<=3)result.push({numerator:number(trimmed.slice(0,split)),denominator:number(trimmed.slice(split)),inferred:true});}}}
     return result.filter((n,i,a)=>a.findIndex(v=>v.numerator===n.numerator&&v.denominator===n.denominator)===i);
   }
   const reference=(language,id)=>language+':'+id;
@@ -247,9 +248,11 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
     function matchName(cardName,source){
       const name=normalize(cardName),base=name.replace(/ (ex|gx|v|vmax|vstar)$/,''),aliases=[name,name.replace(/ (ex|gx|v|vmax|vstar)$/,'$1')];let best=0;
       for(const line of source){
-        for(const alias of aliases)if(line===alias||(' '+line+' ').includes(' '+alias+' '))best=Math.max(best,1);
+        for(const alias of aliases){if(line===alias)best=Math.max(best,1);else if((' '+line+' ').includes(' '+alias+' '))best=Math.max(best,.9);}
         if(base!==name&&(' '+line+' ').includes(' '+base+' '))best=Math.max(best,1);
-        for(const word of line.split(' ')){
+        const words=line.split(' '),count=name.split(' ').length;
+        for(let start=0;start<words.length;start++)for(let n=Math.max(1,count-1);n<=count+1;n++){const phrase=words.slice(start,start+n).join(' ');if(name.length>=5&&similarity(phrase.replace(/ /g,''),name.replace(/ /g,''))>=.8)best=Math.max(best,.78);}
+        for(const word of words){
           if(base.length>=5&&word.includes(base)){const at=word.indexOf(base),after=word.slice(at+base.length);if(at<=1&&(!after||/^[vegx]/.test(after)))best=Math.max(best,.76);}
           if(name.length>=5&&similarity(word,name)>=.8)best=Math.max(best,.74);
         }
@@ -334,10 +337,60 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
   else root.PocketDeckStorage=PocketDeckStorage;
 })(typeof globalThis!=='undefined'?globalThis:this);
 </script>
+  <script>/* In-memory card boundary detection and perspective correction. No storage or network access. */
+(function(root){
+  'use strict';
+  function detectCard(source){
+    const w=Math.min(360,source.width),h=Math.round(source.height*w/source.width),canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+    const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.drawImage(source,0,0,w,h);const pixels=ctx.getImageData(0,0,w,h).data,gray=new Float32Array(w*h),edge=new Uint8Array(w*h),mask=new Uint8Array(w*h);
+    for(let i=0;i<gray.length;i++)gray[i]=pixels[i*4]*.299+pixels[i*4+1]*.587+pixels[i*4+2]*.114;
+    for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const i=y*w+x,gx=-gray[i-w-1]+gray[i-w+1]-2*gray[i-1]+2*gray[i+1]-gray[i+w-1]+gray[i+w+1],gy=-gray[i-w-1]-2*gray[i-w]-gray[i-w+1]+gray[i+w-1]+2*gray[i+w]+gray[i+w+1];if(Math.hypot(gx,gy)>100)edge[i]=1;}
+    for(let y=2;y<h-2;y++)for(let x=2;x<w-2;x++){const i=y*w+x;if(edge[i])for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++)mask[i+dy*w+dx]=1;}
+    const queue=new Int32Array(w*h),seen=new Uint8Array(w*h);let best=null;
+    for(let start=0;start<mask.length;start++){
+      if(!mask[start]||seen[start])continue;let head=0,tail=1;queue[0]=start;seen[start]=1;
+      let tl=null,tr=null,br=null,bl=null,minSum=Infinity,maxSum=-Infinity,minDiff=Infinity,maxDiff=-Infinity;
+      while(head<tail){const i=queue[head++],x=i%w,y=Math.floor(i/w),sum=x+y,diff=x-y;
+        if(sum<minSum){minSum=sum;tl=[x,y];}if(sum>maxSum){maxSum=sum;br=[x,y];}if(diff>maxDiff){maxDiff=diff;tr=[x,y];}if(diff<minDiff){minDiff=diff;bl=[x,y];}
+        for(const n of [i-1,i+1,i-w,i+w])if(n>=0&&n<mask.length&&Math.abs(n%w-x)<=1&&!seen[n]&&mask[n]){seen[n]=1;queue[tail++]=n;}
+      }
+      if(tail<100)continue;const quad=[tl,tr,br,bl],distance=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]),ratio=(distance(tl,tr)+distance(bl,br))/(distance(tl,bl)+distance(tr,br));
+      const area=Math.abs(quad.reduce((s,a,i)=>{const b=quad[(i+1)%4];return s+a[0]*b[1]-a[1]*b[0];},0))/2;
+      if(area<w*h*.15||ratio<.48||ratio>1.05||distance(tl,tr)<w*.2)continue;
+      if(!best||area>best.area)best={area,quad:quad.map(([x,y])=>[x*source.width/w,y*source.height/h]),coverage:area/(w*h)};
+    }
+    gray.fill(0);edge.fill(0);mask.fill(0);queue.fill(0);seen.fill(0);canvas.width=canvas.height=1;
+    return best;
+  }
+  function solve(matrix){
+    const n=matrix.length;
+    for(let col=0;col<n;col++){
+      let pivot=col;for(let i=col+1;i<n;i++)if(Math.abs(matrix[i][col])>Math.abs(matrix[pivot][col]))pivot=i;
+      [matrix[col],matrix[pivot]]=[matrix[pivot],matrix[col]];const d=matrix[col][col];if(Math.abs(d)<1e-9)return null;
+      for(let j=col;j<=n;j++)matrix[col][j]/=d;
+      for(let i=0;i<n;i++)if(i!==col){const factor=matrix[i][col];for(let j=col;j<=n;j++)matrix[i][j]-=factor*matrix[col][j];}
+    }return matrix.map(row=>row[n]);
+  }
+  function rectify(source,quad){
+    const points=[[0,0],[1,0],[1,1],[0,1]],matrix=[];
+    for(let i=0;i<4;i++){const [u,v]=points[i],[x,y]=quad[i];matrix.push([u,v,1,0,0,0,-u*x,-v*x,x],[0,0,0,u,v,1,-u*y,-v*y,y]);}
+    const a=solve(matrix);if(!a)return null;
+    const output=document.createElement('canvas');output.width=Math.min(1000,Math.max(600,Math.round(Math.hypot(quad[1][0]-quad[0][0],quad[1][1]-quad[0][1]))));output.height=Math.round(output.width/.716);
+    const src=source.getContext('2d',{willReadFrequently:true}).getImageData(0,0,source.width,source.height),ctx=output.getContext('2d'),target=ctx.createImageData(output.width,output.height);
+    for(let y=0;y<output.height;y++)for(let x=0;x<output.width;x++){
+      const u=x/(output.width-1),v=y/(output.height-1),d=a[6]*u+a[7]*v+1,sx=Math.max(0,Math.min(source.width-1,(a[0]*u+a[1]*v+a[2])/d)),sy=Math.max(0,Math.min(source.height-1,(a[3]*u+a[4]*v+a[5])/d)),x0=Math.floor(sx),y0=Math.floor(sy),x1=Math.min(source.width-1,x0+1),y1=Math.min(source.height-1,y0+1),fx=sx-x0,fy=sy-y0,i=(y*output.width+x)*4;
+      for(let c=0;c<3;c++)target.data[i+c]=src.data[(y0*source.width+x0)*4+c]*(1-fx)*(1-fy)+src.data[(y0*source.width+x1)*4+c]*fx*(1-fy)+src.data[(y1*source.width+x0)*4+c]*(1-fx)*fy+src.data[(y1*source.width+x1)*4+c]*fx*fy;
+      target.data[i+3]=255;
+    }
+    ctx.putImageData(target,0,0);src.data.fill(0);target.data.fill(0);return output;
+  }
+  root.PocketDeckVision={detectCard,rectify};
+})(typeof globalThis!=='undefined'?globalThis:this);
+</script>
   <script>/* Recognition buffers are transient. This module has no storage or upload code. */
 (function(root){
   'use strict';
-  const VERSION='2.0.0';
+  const VERSION='2.1.0';
   function crop(source,region){
     const [x,y,w,h]=region,width=Math.max(1,Math.round(source.width*w)),height=Math.max(1,Math.round(source.height*h));
     const scale=Math.min(4,1700/width,900/height),pad=20,canvas=document.createElement('canvas');
@@ -346,13 +399,29 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
     ctx.drawImage(source,source.width*x,source.height*y,width,height,pad,pad,canvas.width-pad*2,canvas.height-pad*2);
     return canvas;
   }
+  function isolateText(canvas,pad=20){
+    const ctx=canvas.getContext('2d',{willReadFrequently:true}),image=ctx.getImageData(0,0,canvas.width,canvas.height),pixels=image.data,w=canvas.width,h=canvas.height,gray=new Uint8Array(w*h),seen=new Uint8Array(w*h),queue=new Int32Array(w*h);let low=255,high=0;
+    for(let i=0;i<gray.length;i++){const v=Math.round(pixels[i*4]*.299+pixels[i*4+1]*.587+pixels[i*4+2]*.114);gray[i]=v;low=Math.min(low,v);high=Math.max(high,v);}
+    const threshold=low+(high-low)*.294;for(let i=0;i<gray.length;i++)gray[i]=gray[i]>threshold?255:0;
+    // Discard dark artwork crossing the crop boundary, preserving enclosed text glyphs.
+    for(let y=pad;y<h-pad;y++)for(let x=pad;x<w-pad;x++){
+      const first=y*w+x;if(gray[first]||seen[first])continue;let head=0,tail=1,touches=false;queue[0]=first;seen[first]=1;
+      while(head<tail){const i=queue[head++],a=i%w,b=Math.floor(i/w);if(a<=pad||a>=w-pad-1||b<=pad||b>=h-pad-1)touches=true;
+        for(const n of [i-1,i+1,i-w,i+w])if(n>=0&&n<gray.length&&Math.abs(n%w-a)<=1&&!seen[n]&&!gray[n]){seen[n]=1;queue[tail++]=n;}
+      }
+      if(touches)for(let i=0;i<tail;i++)gray[queue[i]]=255;
+    }
+    for(let i=0;i<gray.length;i++){pixels[i*4]=pixels[i*4+1]=pixels[i*4+2]=gray[i];pixels[i*4+3]=255;}
+    ctx.putImageData(image,0,0);pixels.fill(0);gray.fill(0);seen.fill(0);queue.fill(0);
+  }
   function deadline(promise,ms,label){let timer;return Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error(label)),ms);})]).finally(()=>clearTimeout(timer));}
   async function read(source,opts){
     let worker=null;const buffers=[];const result={header:'',footer:'',full:''};
+    opts.onCleanup?.(()=>{for(const canvas of buffers){canvas.width=1;canvas.height=1;}});
     const active=()=>{if(opts.cancelled())throw Error('Analyse abgebrochen.');};
-    async function pass(region,psm,label,numbers=false){
-      active();opts.progress(label);const canvas=crop(source,region);buffers.push(canvas);
-      await worker.setParameters({tessedit_pageseg_mode:String(psm),tessedit_char_whitelist:numbers?'0123456789/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz ':''});
+    async function pass(region,psm,label,numbers=false,clean=false){
+      active();opts.progress(label);const canvas=crop(source,region);buffers.push(canvas);if(clean)isolateText(canvas);
+      await worker.setParameters({tessedit_pageseg_mode:String(psm),tessedit_char_whitelist:numbers?(clean?'0123456789/':'0123456789/ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz '):''});
       const output=await deadline(worker.recognize(canvas),45000,'Das Lesen dauert zu lange. Bitte Name oder Kartennummer gezielt aufnehmen.');active();
       canvas.width=1;canvas.height=1;return output.data?.text||'';
     }
@@ -365,13 +434,13 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
       let abandoned=false;pending.then(w=>{if(abandoned||opts.cancelled())w.terminate().catch(()=>{});}).catch(()=>{});
       try{worker=await deadline(pending,60000,'Erkennung nicht geladen. Internetverbindung prüfen und erneut versuchen.');}catch(error){abandoned=true;throw error;}
       opts.onWorker(worker);active();
-      if(opts.mode==='name')result.header=await pass([0,0,1,1],7,'Kartenname und KP werden gelesen …');
-      else if(opts.mode==='number')result.footer=await pass([0,0,1,1],7,'Kartennummer wird gelesen …',true);
+      if(opts.mode==='name'){result.header=await pass([0,0,1,1],7,'Kartenname wird gelesen …');result.header+='\n'+await pass([0,0,1,1],8,'Störende Bildanteile werden entfernt …',false,true);}
+      else if(opts.mode==='number'){result.footer=await pass([0,0,1,1],7,'Kartennummer wird gelesen …',true);result.footer+='\n'+await pass([0,0,1,1],7,'Ziffern werden freigestellt …',true,true);}
       else{
         result.header=await pass([.16,.03,.53,.06],7,'1/3 · Kartenname wird gezielt gelesen …');
-        result.header+='\n'+await pass([.035,.025,.82,.070],7,'Kartenname wird zusätzlich vollständig geprüft …');
+        result.header+='\n'+await pass([.17,.032,.32,.065],8,'Schrift wird vom Motiv getrennt …',false,true);
         result.footer=await pass([.115,.934,.275,.04],7,'2/3 · Kleine Kartennummer wird vergrößert gelesen …',true);
-        result.footer+='\n'+await pass([.01,.865,.98,.13],11,'3/3 · Nummer und Setangaben werden abgeglichen …');
+        result.footer+='\n'+await pass([.16,.94,.18,.035],7,'3/3 · Nummer wird vom Motiv getrennt …',true,true);
       }
       // Full text is a fallback, not the primary evidence: evolution/attack text can name a different Pokémon.
       if(opts.mode==='card')result.full=await pass([0,0,1,1],11,'Kartentext als zusätzliche Kontrolle …');
@@ -393,6 +462,7 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
   const region=['','Kanto','Johto','Hoenn','Sinnoh','Einall','Kalos','Alola','Galar & Hisui','Paldea'];
   const languageNames={de:'Deutsch',en:'Englisch',ja:'Japanisch'};
   let db,ready=false,entries=[],page='home',language='de',theme='system',autoRefresh=true,filter='all',mode='cards',query='',generation=0,limit=60,selection=null,reviewEntry=null,reviewConfirmed=false,manualScan=false,refreshing=false,mutations=Promise.resolve(),mutationBusy=false;
+  let activeScanCanvas=null,scanCleanup=null;
   let stream=null,ocrWorker=null,analysisID=0,scan={busy:false,progress:'',candidates:[],language:'de',done:false};
   const knownDetails=new Map(),pendingRequests=new Map();
   const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -496,7 +566,7 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
     const evidenceLine=[scanNames?'Name: '+scanNames.split('\n')[0]:'',scanNumbers.length?'Nummer: '+scanNumbers.map(n=>n.numerator+'/'+n.denominator).join(', '):''].filter(Boolean).join(' · ');
     const modeTitle={card:'Ganze Karte',name:'Name und KP oben',number:'Kartennummer unten'}[scanFocus];
     function candidateButton(c,featured=false){return `<button type="button" class="pd-generation ${featured?'pd-featured-result':''}" data-action="scan-candidate" data-id="${esc(c.card.id)}"><span style="width:${featured?80:48}px;flex-shrink:0">${artwork(c.card)}</span><span class="pd-grow"><strong>${esc(c.card.name)}</strong><span class="pd-small pd-muted" style="display:block">${esc(c.detail?.set?.name||setID(c.card))} · #${esc(c.card.localId)}</span><span class="pd-tiny pd-muted">${c.nameMatch?'Name passt':'Name noch prüfen'}${c.numberMatch?' · Nummer passt':''}${c.setMatch===true?' · Setgröße passt':c.setMatch===false?' · Setgröße weicht ab':''}</span></span>${icon('chevron-right')}</button>`;}
-    content.innerHTML=`<div class="pd-stack"><div class="pd-substack"><h1>Karte erkennen</h1><p class="pd-muted">Ganze Karte oder einzelne Merkmale aufnehmen.</p></div>${scan.done?`<section class="pd-surface pd-substack" aria-live="polite"><span class="pd-tag" style="align-self:flex-start">${identified?'Karten-Vorschlag':credible?'Pokémon erkannt · Ausgabe noch prüfen':'Noch nicht eindeutig'}</span><h2>${credible?esc(best.card.name):'Bitte Namen oder Nummer ergänzen'}</h2>${evidenceLine?`<p class="pd-small pd-muted">${esc(evidenceLine)}</p>`:''}${credible?candidateButton(best,true):''}${!identified?`<p class="pd-small pd-muted">${!credible?'Fotografiere den Namen oben auf der Karte.':'Für die genaue Ausgabe jetzt die kleine Nummer unten fotografieren, z. B. 025/165.'}</p>`:''}<div class="pd-filters"><button class="pd-secondary" data-action="scan-mode" data-mode="name">Namen aufnehmen</button><button class="pd-secondary" data-action="scan-mode" data-mode="number">Nummer ergänzen</button></div><span class="pd-small pd-muted">Aufnahme verworfen · kein Foto gespeichert</span></section>`:''}<div class="pd-segment" aria-label="Scanbereich">${[['card','Ganzkarte'],['name','Name oben'],['number','Nummer unten']].map(([id,label])=>`<button type="button" data-action="scan-mode" data-mode="${id}" aria-pressed="${scanFocus===id}" ${scan.busy?'disabled':''}>${label}</button>`).join('')}</div><div class="pd-camera pd-camera-${scanFocus}" id="pd-camera-box">${stream?'<video id="pd-video" autoplay playsinline muted></video><div id="pd-camera-frame" aria-hidden="true"></div>':`<div class="pd-camera-placeholder">${icon('scan-line')}<span>${scan.busy?'Deine Karte wird gelesen …':modeTitle+' scharf und ohne Spiegelungen aufnehmen'}</span></div>`}</div>${scan.busy?`<div class="pd-success" role="status"><span id="pd-scan-progress">${esc(scan.progress)}</span></div><button type="button" class="pd-secondary" data-action="cancel-analysis">Analyse abbrechen</button>`:stream?'<button type="button" class="pd-primary" data-action="capture">Aufnehmen & erkennen</button><button type="button" class="pd-secondary" data-action="stop-camera">Kamera schließen</button>':`<div class="pd-row pd-between"><span class="pd-small pd-muted">Kartensprache</span>${languagePicker()}</div><button type="button" class="pd-primary" data-action="start-camera" ${!ready?'disabled':''}>${icon('camera')}Kamera öffnen</button><label class="pd-upload">${icon('image')}Foto für diesen Bereich wählen<input id="pd-scan-file" type="file" accept="image/*" aria-label="Foto einmalig analysieren" ${!ready?'disabled':''}></label>`}${scan.done&&scan.candidates.length?`<details><summary>Weitere mögliche Ausgaben (${scan.candidates.length})</summary><div class="pd-substack" style="margin-top:12px">${scan.candidates.map(c=>candidateButton(c)).join('')}</div></details>`:''}<button type="button" class="pd-secondary" data-action="manual-search">${icon('search')}Name oder Nummer manuell suchen</button>${scan.done?'<button type="button" class="pd-secondary" data-action="scan-reset">Nächste Karte · Erkennung zurücksetzen</button>':''}<p class="pd-small pd-muted">Nur die App-Arbeitskopie wird nach der Analyse verworfen. Ein vorhandenes Original in deiner Mediathek bleibt erhalten. Holo und Auflage vor dem Einsortieren prüfen.</p></div>`;
+    content.innerHTML=`<div class="pd-stack"><div class="pd-substack"><h1>Karte erkennen</h1><p class="pd-muted">Ganze Karte oder einzelne Merkmale aufnehmen.</p></div>${scan.done?`<section id="pd-scan-result" class="pd-surface pd-substack" aria-live="polite"><span class="pd-tag" style="align-self:flex-start">${identified?'Karten-Vorschlag':credible?'Pokémon erkannt · Ausgabe noch prüfen':'Noch nicht eindeutig'}</span><h2>${credible?esc(best.card.name):'Bitte Namen oder Nummer ergänzen'}</h2>${evidenceLine?`<p class="pd-small pd-muted">${esc(evidenceLine)}</p>`:''}${credible?candidateButton(best,true):''}${scan.error?`<p class="pd-danger" role="alert">${esc(scan.error)}</p>`:''}${!credible?'<p class="pd-small pd-muted">Es konnte keine Karte zuverlässig zugeordnet werden. Die Aufnahme wurde verworfen.</p>':''}${!identified?`<p class="pd-small pd-muted">${!credible?'Fotografiere den Namen oben auf der Karte.':'Für die genaue Ausgabe jetzt die kleine Nummer unten fotografieren, z. B. 025/165.'}</p>`:''}<div class="pd-filters"><button class="pd-secondary" data-action="scan-mode" data-mode="name">Namen aufnehmen</button><button class="pd-secondary" data-action="scan-mode" data-mode="number">Nummer ergänzen</button></div><span class="pd-small pd-muted">Aufnahme verworfen · kein Foto gespeichert</span></section>`:''}<div class="pd-segment" aria-label="Scanbereich">${[['card','Ganzkarte'],['name','Name oben'],['number','Nummer unten']].map(([id,label])=>`<button type="button" data-action="scan-mode" data-mode="${id}" aria-pressed="${scanFocus===id}" ${scan.busy?'disabled':''}>${label}</button>`).join('')}</div><div class="pd-camera pd-camera-${scanFocus}" id="pd-camera-box">${stream?'<video id="pd-video" autoplay playsinline muted></video><div id="pd-camera-frame" aria-hidden="true"></div>':`<div class="pd-camera-placeholder">${icon('scan-line')}<span>${scan.busy?'Deine Karte wird gelesen …':modeTitle+' scharf und ohne Spiegelungen aufnehmen'}</span></div>`}</div>${scan.busy?`<div class="pd-success" role="status"><span id="pd-scan-progress">${esc(scan.progress)}</span></div><button type="button" class="pd-secondary" data-action="cancel-analysis">Analyse abbrechen</button>`:stream?'<button type="button" class="pd-primary" data-action="capture">Aufnehmen & erkennen</button><button type="button" class="pd-secondary" data-action="stop-camera">Kamera schließen</button>':`<div class="pd-row pd-between"><span class="pd-small pd-muted">Kartensprache</span>${languagePicker()}</div><button type="button" class="pd-primary" data-action="start-camera" ${!ready?'disabled':''}>${icon('camera')}Kamera öffnen</button><label class="pd-upload">${icon('image')}Foto für diesen Bereich wählen<input id="pd-scan-file" type="file" accept="image/*" aria-label="Foto einmalig analysieren" ${!ready?'disabled':''}></label>`}${scan.done&&scan.candidates.length?`<details><summary>Weitere mögliche Ausgaben (${scan.candidates.length})</summary><div class="pd-substack" style="margin-top:12px">${scan.candidates.map(c=>candidateButton(c)).join('')}</div></details>`:''}<button type="button" class="pd-secondary" data-action="manual-search">${icon('search')}Name oder Nummer manuell suchen</button>${scan.done?'<button type="button" class="pd-secondary" data-action="scan-reset">Nächste Karte · Erkennung zurücksetzen</button>':''}<p class="pd-small pd-muted">Nur die App-Arbeitskopie wird nach der Analyse verworfen. Ein vorhandenes Original in deiner Mediathek bleibt erhalten. Holo und Auflage vor dem Einsortieren prüfen.</p></div>`;
     if(stream){const video=document.getElementById('pd-video');video.srcObject=stream;video.play().catch(()=>{});}
   }
   async function startCamera(){
@@ -517,7 +587,7 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
   let tesseractPromise;
   function loadOCR(){
     if(window.Tesseract)return Promise.resolve(window.Tesseract);if(tesseractPromise)return tesseractPromise;
-    tesseractPromise=new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='https://cdn.jsdelivr.net/npm/tesseract.js@6.0.1/dist/tesseract.min.js';script.onload=()=>resolve(window.Tesseract);script.onerror=()=>{tesseractPromise=null;reject(Error('Die Erkennung konnte nicht geladen werden. Für den ersten Scan ist Internet nötig.'));};document.head.append(script);});return tesseractPromise;
+    tesseractPromise=new Promise((resolve,reject)=>{const script=document.createElement('script'),timer=setTimeout(()=>{tesseractPromise=null;script.remove();reject(Error('Erkennung konnte nicht geladen werden. Internetverbindung prüfen und erneut versuchen.'));},20000);script.src='https://cdn.jsdelivr.net/npm/tesseract.js@6.0.1/dist/tesseract.min.js';script.onload=()=>{clearTimeout(timer);resolve(window.Tesseract);};script.onerror=()=>{clearTimeout(timer);tesseractPromise=null;reject(Error('Die Erkennung konnte nicht geladen werden. Für den ersten Scan ist Internet nötig.'));};document.head.append(script);});return tesseractPromise;
   }
   async function visualRerank(candidates,vector){
     await Promise.all(candidates.slice(0,6).map(async candidate=>{
@@ -526,17 +596,26 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
       catch{/* OCR remains usable if a catalog image is unavailable or CORS changes. */}finally{clearTimeout(timer);image.src='';}
     }));return candidates.sort((a,b)=>b.score-a.score);
   }
+  async function rankInWorker(catalog,text,evidence){
+    if(typeof Worker!=='function')return C.rank(catalog,text,32,evidence);
+    const source=document.getElementById('pd-core').textContent+';self.onmessage=e=>{try{postMessage({candidates:PocketDeckCore.rank(e.data.catalog,e.data.text,32,e.data.evidence)});}catch(error){postMessage({error:String(error.message||error)});}};';
+    const url=URL.createObjectURL(new Blob([source],{type:'application/javascript'}));let worker,timer;
+    try{return await new Promise((resolve,reject)=>{worker=new Worker(url);timer=setTimeout(()=>reject(Error('Der Katalogabgleich dauert zu lange. Bitte Name und Nummer getrennt aufnehmen.')),20000);worker.onmessage=event=>event.data.error?reject(Error(event.data.error)):resolve(event.data.candidates);worker.onerror=()=>reject(Error('Der Kartenabgleich konnte nicht ausgeführt werden. Bitte erneut versuchen.'));worker.postMessage({catalog,text,evidence});});}
+    finally{clearTimeout(timer);worker?.terminate();URL.revokeObjectURL(url);}
+  }
   async function analyze(canvas){
-    const token=++analysisID,lang=language,focus=scanFocus;scan={busy:true,progress:'Erkennung wird geladen …',candidates:[],language:lang,done:false};stopCamera();render();let vector=null,result=null;
+    const token=++analysisID,lang=language,focus=scanFocus;scan={busy:true,progress:'Erkennung wird geladen …',candidates:[],language:lang,done:false};stopCamera();render();activeScanCanvas=canvas;let vector=null,result=null,normalized=null;
+    function reveal(){if(page==='scan'){render();setTimeout(()=>document.getElementById('pd-scan-result')?.scrollIntoView?.({block:'start',behavior:'smooth'}),0);}}
+    const watchdog=setTimeout(()=>{if(token!==analysisID)return;analysisID++;canvas.width=canvas.height=1;if(normalized)normalized.width=normalized.height=1;scanCleanup?.();ocrWorker?.terminate().catch(()=>{});ocrWorker=null;activeScanCanvas=null;scan.busy=false;scan.done=true;scan.error='Der Scan hat das Zeitlimit erreicht. Bitte Name oder Nummer gezielt aufnehmen und erneut versuchen.';reveal();},100000);
     try{
-      if(focus==='card')vector=C.visualVector(canvas);
+      if(focus==='card'){setProgress('Kartenrand wird gesucht und das Bild gerade ausgerichtet …');const boundary=PocketDeckVision.detectCard(canvas);if(boundary){normalized=PocketDeckVision.rectify(canvas,boundary.quad);scan.rectified=!!normalized;}if(normalized){canvas.width=canvas.height=1;activeScanCanvas=normalized;}vector=C.visualVector(normalized||canvas);}
       const engine=await loadOCR();if(token!==analysisID)return;
-      result=await PocketDeckScanner.read(canvas,{mode:focus,language:lang,engine,cancelled:()=>token!==analysisID,progress:text=>{if(token===analysisID)setProgress(text);},onWorker:worker=>{if(token===analysisID)ocrWorker=worker;}});
-      if(token!==analysisID)return;
+      result=await PocketDeckScanner.read(normalized||canvas,{mode:focus,language:lang,engine,cancelled:()=>token!==analysisID,progress:text=>{if(token===analysisID)setProgress(text);},onCleanup:cleanup=>{if(token===analysisID)scanCleanup=cleanup;},onWorker:worker=>{if(token===analysisID)ocrWorker=worker;}});
+      if(token!==analysisID)return;canvas.width=canvas.height=1;if(normalized)normalized.width=normalized.height=1;
       const headerText=result.header||scanNames,detectedNumbers=C.collectorNumbers(result.footer);
       if(detectedNumbers.length)scanNumbers=detectedNumbers;
       setProgress('Name, Nummer und Set werden miteinander abgeglichen …');
-      let candidates=C.rank(catalogues[lang]||[],result.full||headerText,32,{header:headerText,footer:result.footer,numbers:scanNumbers});
+      let candidates=await rankInWorker(catalogues[lang]||[],result.full||headerText,{header:headerText,footer:result.footer,numbers:scanNumbers});
       // A number by itself is insufficient for an exact identification. Check all leading set candidates, not only arbitrary first hits.
       const numbers=scanNumbers;if(candidates.some(c=>c.nameMatch))candidates=candidates.filter(c=>c.nameMatch);
       const toCheck=numbers.length?candidates.filter(c=>c.numberMatch).slice(0,12):[];
@@ -552,13 +631,13 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
       // Retain only canonical catalog names and parsed card numbers for a second detail shot; never OCR text or image buffers.
       const names=[...new Set(scan.candidates.filter(c=>c.nameMatch).map(c=>c.card.name))];if(names.length)scanNames=names.slice(0,4).join('\n');
       scan.done=true;
-    }catch(e){if(token===analysisID){scan.done=true;notice('Erkennung nicht abgeschlossen: '+e.message,'error');}}
+    }catch(e){if(token===analysisID){scan.done=true;scan.error='Erkennung nicht abgeschlossen: '+e.message;notice(scan.error,'error');}}
     finally{
-      canvas.width=1;canvas.height=1;if(vector)vector.fill(0);if(result){result.header='';result.footer='';result.full='';}if(token===analysisID)ocrWorker=null;
-      if(token===analysisID){scan.busy=false;scan.progress='Aufnahme verworfen';if(page==='scan')render();}
+      clearTimeout(watchdog);canvas.width=1;canvas.height=1;if(normalized)normalized.width=normalized.height=1;if(activeScanCanvas===canvas||activeScanCanvas===normalized)activeScanCanvas=null;if(vector)vector.fill(0);if(result){result.header='';result.footer='';result.full='';}if(token===analysisID)ocrWorker=null;
+      if(token===analysisID){scan.busy=false;scan.progress='Aufnahme verworfen';scanCleanup=null;reveal();}
     }
   }
-  async function cancelAnalysis(){analysisID++;stopCamera();if(ocrWorker){await ocrWorker.terminate().catch(()=>{});ocrWorker=null;}scan={busy:false,progress:'',candidates:[],language,done:false};if(page==='scan')render();notice('Analyse abgebrochen. Die App speichert keine Aufnahme.');}
+  async function cancelAnalysis(){analysisID++;stopCamera();if(activeScanCanvas){activeScanCanvas.width=activeScanCanvas.height=1;activeScanCanvas=null;}scanCleanup?.();scanCleanup=null;if(ocrWorker){await ocrWorker.terminate().catch(()=>{});ocrWorker=null;}scan={busy:false,progress:'',candidates:[],language,done:false};if(page==='scan')render();notice('Analyse abgebrochen. Die App speichert keine Aufnahme.');}
   async function saveReview(form){
     if(!form.reportValidity()||mutationBusy||!selection?.card)return;const values=new FormData(form),old=reviewEntry;
     const item={id:old?.id||crypto.randomUUID(),card:safeCard(selection.card),language:selection.language,variantID:String(values.get('variantID')),quantity:Number(values.get('quantity')),condition:String(values.get('condition')),notes:String(values.get('notes')||''),addedAt:old?.addedAt||Date.now(),priceCheckedAt:Date.now()};
@@ -568,7 +647,7 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
     finally{mutationBusy=false;if(page==='review')render();}
   }
   function renderSettings(){
-    content.innerHTML=`<div class="pd-stack"><h1>Ganz nach dir.</h1><span class="pd-tag" style="align-self:flex-start">Version 2.0.0 · Neue Fotoerkennung</span><section class="pd-surface"><h2>Dein iPhone-Album</h2><p class="pd-small pd-muted" style="margin-top:9px">In Safari: Teilen → Zum Home-Bildschirm → als Web-App öffnen. Starte danach das neue Symbol, bevor du deine Sammlung anlegst.</p><p class="pd-small pd-muted" style="margin-top:9px">Safari und die Home-Bildschirm-App können getrennte Speicher verwenden. Für einen Wechsel vorher eine Sicherung exportieren.</p></section><section class="pd-surface pd-substack"><h2>Erscheinungsbild</h2><div class="pd-segment">${[['system','System'],['light','Hell'],['dark','Dunkel']].map(([value,label])=>`<button data-action="theme" data-value="${value}" aria-pressed="${theme===value}">${label}</button>`).join('')}</div><label class="pd-field">Kartensprache${languagePicker()}</label></section><section class="pd-surface"><h2>Marktpreise</h2><label class="pd-setting"><span>Automatisch aktualisieren</span><input id="pd-auto-refresh" type="checkbox" ${autoRefresh?'checked':''}></label><button class="pd-secondary" data-action="refresh-prices" ${refreshing||!entries.length?'disabled':''}>${icon('refresh-cw')}Preise jetzt abfragen</button><p id="pd-price-progress" class="pd-small pd-muted" style="margin-top:10px">${refreshing?'Preise werden abgefragt …':'Beim Öffnen und während der Nutzung nach frühestens sechs Stunden. Keine Abfragen bei geschlossener App.'}</p></section><section class="pd-surface pd-substack"><h2>Deine Daten</h2><p class="pd-small pd-muted">Sammlung lokal im Browserspeicher. Keine gespeicherten Aufnahmen, keine Foto-Uploads und keine automatische Cloud-Synchronisierung.</p><button class="pd-secondary" data-action="export" ${!ready?'disabled':''}>${icon('download')}Sicherung exportieren</button><label class="pd-upload">${icon('upload')}Sicherung wiederherstellen<input id="pd-import" type="file" accept="application/json,.json" aria-label="Sicherung importieren"></label><p class="pd-small pd-muted">Browserdaten können gelöscht werden, etwa beim Aufräumen des Gerätes. Sichere deine Sammlung regelmäßig in „Dateien“ oder iCloud Drive.</p><button class="pd-secondary" data-action="persistent-storage">Beständigen Speicher anfragen</button></section><section class="pd-surface pd-substack"><h2>Katalog & Quellen</h2><p class="pd-small pd-muted">${currentCatalog().length.toLocaleString('de-DE')} Karten · ${languageNames[language]}<br>${species.length.toLocaleString('de-DE')} Pokémon</p><button class="pd-secondary" data-action="refresh-catalog">Kartenkatalog aktualisieren</button><a href="https://tcgdex.dev" target="_blank" rel="noopener">TCGdex · Karten und Preise</a><a href="https://github.com/naptha/tesseract.js" target="_blank" rel="noopener">Tesseract.js · lokale Texterkennung</a><p class="pd-small pd-muted">Kartendaten, einzelne Varianten und Preise können beim Anbieter fehlen. Pokémon-Namen und Abbildungen gehören ihren jeweiligen Rechteinhabern.</p></section></div>`;
+    content.innerHTML=`<div class="pd-stack"><h1>Ganz nach dir.</h1><span class="pd-tag" style="align-self:flex-start">Version 2.1.0 · Kartenrand-Erkennung</span><section class="pd-surface"><h2>Dein iPhone-Album</h2><p class="pd-small pd-muted" style="margin-top:9px">In Safari: Teilen → Zum Home-Bildschirm → als Web-App öffnen. Starte danach das neue Symbol, bevor du deine Sammlung anlegst.</p><p class="pd-small pd-muted" style="margin-top:9px">Safari und die Home-Bildschirm-App können getrennte Speicher verwenden. Für einen Wechsel vorher eine Sicherung exportieren.</p></section><section class="pd-surface pd-substack"><h2>Erscheinungsbild</h2><div class="pd-segment">${[['system','System'],['light','Hell'],['dark','Dunkel']].map(([value,label])=>`<button data-action="theme" data-value="${value}" aria-pressed="${theme===value}">${label}</button>`).join('')}</div><label class="pd-field">Kartensprache${languagePicker()}</label></section><section class="pd-surface"><h2>Marktpreise</h2><label class="pd-setting"><span>Automatisch aktualisieren</span><input id="pd-auto-refresh" type="checkbox" ${autoRefresh?'checked':''}></label><button class="pd-secondary" data-action="refresh-prices" ${refreshing||!entries.length?'disabled':''}>${icon('refresh-cw')}Preise jetzt abfragen</button><p id="pd-price-progress" class="pd-small pd-muted" style="margin-top:10px">${refreshing?'Preise werden abgefragt …':'Beim Öffnen und während der Nutzung nach frühestens sechs Stunden. Keine Abfragen bei geschlossener App.'}</p></section><section class="pd-surface pd-substack"><h2>Deine Daten</h2><p class="pd-small pd-muted">Sammlung lokal im Browserspeicher. Keine gespeicherten Aufnahmen, keine Foto-Uploads und keine automatische Cloud-Synchronisierung.</p><button class="pd-secondary" data-action="export" ${!ready?'disabled':''}>${icon('download')}Sicherung exportieren</button><label class="pd-upload">${icon('upload')}Sicherung wiederherstellen<input id="pd-import" type="file" accept="application/json,.json" aria-label="Sicherung importieren"></label><p class="pd-small pd-muted">Browserdaten können gelöscht werden, etwa beim Aufräumen des Gerätes. Sichere deine Sammlung regelmäßig in „Dateien“ oder iCloud Drive.</p><button class="pd-secondary" data-action="persistent-storage">Beständigen Speicher anfragen</button></section><section class="pd-surface pd-substack"><h2>Katalog & Quellen</h2><p class="pd-small pd-muted">${currentCatalog().length.toLocaleString('de-DE')} Karten · ${languageNames[language]}<br>${species.length.toLocaleString('de-DE')} Pokémon</p><button class="pd-secondary" data-action="refresh-catalog">Kartenkatalog aktualisieren</button><a href="https://tcgdex.dev" target="_blank" rel="noopener">TCGdex · Karten und Preise</a><a href="https://github.com/naptha/tesseract.js" target="_blank" rel="noopener">Tesseract.js · lokale Texterkennung</a><p class="pd-small pd-muted">Kartendaten, einzelne Varianten und Preise können beim Anbieter fehlen. Pokémon-Namen und Abbildungen gehören ihren jeweiligen Rechteinhabern.</p></section></div>`;
   }
   async function exportBackup(){
     try{const backup={format:'PocketDeckWeb',schemaVersion:1,exportedAt:new Date().toISOString(),entries:entries.map(safeEntry)};C.validBackup(backup);const blob=new Blob([JSON.stringify(backup)],{type:'application/json'}),url=URL.createObjectURL(blob),anchor=document.createElement('a');anchor.href=url;anchor.download='PocketDeck-'+new Date().toISOString().slice(0,10)+'.json';document.body.append(anchor);anchor.click();anchor.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);notice('Sicherung vorbereitet. Speichere die JSON-Datei in „Dateien“ oder iCloud Drive.');}
@@ -608,7 +687,7 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
       if(action==='export'){await exportBackup();return;}
       if(action==='persistent-storage'){const persisted=await navigator.storage?.persist?.();notice(persisted?'Der Browser hat beständigen Speicher gewährt. Sicherungen bleiben sinnvoll.':'Der Browser hat keine Beständigkeit zugesichert. Bitte regelmäßig Sicherungen exportieren.');return;}
       if(action==='refresh-catalog'){button.disabled=true;button.textContent='Katalog wird geladen …';const cards=await fetchJSON(`https://api.tcgdex.net/v2/${language}/cards`);if(!Array.isArray(cards)||!cards.length)throw Error('Ungültiger Katalog.');catalogues[language]=cards.filter(c=>!String(c.image||'').includes('/tcgp/')).map(c=>({...c,localId:String(c.localId)}));await db.put('cache','catalog:'+language,catalogues[language]);render();notice('Kartenkatalog aktualisiert.');return;}
-    }catch(e){notice(e.message,'error');if(action==='refresh-catalog')render();}
+    }catch(e){notice(e.message,'error');if(action==='capture'){stopCamera();scan.busy=false;scan.done=true;scan.error=e.message;render();setTimeout(()=>document.getElementById('pd-scan-result')?.scrollIntoView?.({block:'start',behavior:'smooth'}),0);}else if(action==='refresh-catalog')render();}
   });
   let searchTimer;
   root.addEventListener('input',event=>{if(event.target.id==='pd-search'){query=event.target.value;limit=60;clearTimeout(searchTimer);searchTimer=setTimeout(albumResults,100);}});
@@ -623,7 +702,7 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
       if(target.id==='pd-auto-refresh'){autoRefresh=target.checked;await db.put('settings','autoRefresh',autoRefresh);}
       if(target.id==='pd-import'&&target.files[0]){const file=target.files[0];target.value='';await importBackup(file);}
       if(target.id==='pd-scan-file'&&target.files[0]&&!scan.busy){let file=target.files[0];target.value='';const canvas=await canvasFromFile(file);file=null;await analyze(canvas);}
-    }catch(e){notice(e.message,'error');}
+    }catch(e){notice(e.message,'error');if(target.id==='pd-scan-file'){scan.busy=false;scan.done=true;scan.error='Das Foto konnte nicht verarbeitet werden: '+e.message;render();setTimeout(()=>document.getElementById('pd-scan-result')?.scrollIntoView?.({block:'start',behavior:'smooth'}),0);}}
   });
   document.addEventListener('visibilitychange',()=>{if(document.hidden)stopCamera();else{if(page==='scan'&&!scan.busy)render();if(autoRefresh)refreshPrices();}});
   window.addEventListener('pagehide',()=>{stopCamera();analysisID++;ocrWorker?.terminate().catch(()=>{});});
