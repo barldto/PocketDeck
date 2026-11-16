@@ -1,4 +1,4 @@
-PaddleOCR.js 0.4.2 und PP-OCRv6 tiny Modelle
+PaddleOCR.js 0.4.2, PP-OCRv6 tiny und PP-OCRv5 mobile Modelle (Japanisch/Koreanisch)
 Copyright PaddlePaddle Authors
 SDK-Modifikation: feste CDN-Importpfade fuer die Browser-Einbindung.
 Quelle: https://github.com/PaddlePaddle/PaddleOCR

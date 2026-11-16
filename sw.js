@@ -1,5 +1,5 @@
 /* No captured images or OCR input pass through this worker. Only app files and public GET resources are cached. */
-const VERSION='pocketdeck-web-no-photos-v4-1-textocr',SHELL=VERSION+'-shell',PUBLIC=VERSION+'-public';
+const VERSION='pocketdeck-web-no-photos-v4-2-auto-languages',SHELL=VERSION+'-shell',PUBLIC=VERSION+'-public';
 const shellFiles=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(SHELL).then(cache=>cache.addAll(shellFiles)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith('pocketdeck-web-')&&![SHELL,PUBLIC].includes(key)).map(key=>caches.delete(key)))).then(()=>self.clients.claim()));});
