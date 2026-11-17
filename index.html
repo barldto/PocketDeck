@@ -3585,7 +3585,9 @@ self.onmessage=async event=>{
     if(!priceMeta||!card)return card;
     const original=q=>Number(q?.tcgdexId||q?.idProduct)||0;
     const topId=original(card.pricing?.cardmarket),topQuote=quoteFor(resolveProduct(card,lang,topId),topId);let changed=!!topQuote;
-    const variants=card.variants_detailed?.map(v=>{const own=original(v.pricing?.cardmarket)||Number(v.thirdParty?.cardmarket)||topId;const q=quoteFor(resolveProduct(card,lang,own),own);if(!q)return v;changed=true;return {...v,pricing:{...(v.pricing||{}),cardmarket:q}};});
+    const variants=card.variants_detailed?.map(v=>{const own=original(v.pricing?.cardmarket)||Number(v.thirdParty?.cardmarket)||topId;
+      // Variants with their own product (stamped, prerelease, 1st edition shadowless …) keep it; only the main product is corrected.
+      const q=quoteFor(own&&own!==topId?own:resolveProduct(card,lang,own),own);if(!q)return v;changed=true;return {...v,pricing:{...(v.pricing||{}),cardmarket:q}};});
     return changed?{...card,priceUnavailable:undefined,pricing:topQuote?{...(card.pricing||{}),cardmarket:topQuote}:card.pricing,variants_detailed:variants||card.variants_detailed}:card;
   }
   async function livePrice(card,lang){try{if(!priceMeta)await loadPriceMeta();if(await preparePrices([{card,lang}]))return applyLivePrice(card,lang);}catch{}return card;}
