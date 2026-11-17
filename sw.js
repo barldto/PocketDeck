@@ -1,5 +1,5 @@
 /* No captured images or OCR input pass through this worker. Only app files and public GET resources are cached. */
-const VERSION='pocketdeck-web-v4-6-2',SHELL=VERSION+'-shell',PUBLIC=VERSION+'-public',ART='pocketdeck-art-v2';
+const VERSION='pocketdeck-web-v4-6-3',SHELL=VERSION+'-shell',PUBLIC=VERSION+'-public',ART='pocketdeck-art-v2';
 const shellFiles=['./','./index.html','./catalog.json','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png'];
 self.addEventListener('install',event=>{event.waitUntil(caches.open(SHELL).then(cache=>cache.addAll(shellFiles)).then(()=>self.skipWaiting()));});
 // Old app versions are removed. Pokémon artwork and the on-device safety copy of the collection are kept.
