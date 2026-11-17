@@ -1,0 +1,182 @@
+[
+ {
+  "idProduct": 719447,
+  "name": "Charmeleon [Combustion | Fire Blast]",
+  "idCategory": 51,
+  "categoryName": "Pokémon Single",
+  "idExpansion": 5328,
+  "idMetacard": 421084,
+  "dateAdded": "2023-06-20 11:14:21"
+ },
+ {
+  "idProduct": 719622,
+  "name": "Charmeleon [Combustion | Fire Blast]",
+  "idCategory": 51,
+  "categoryName": "Pokémon Single",
+  "idExpansion": 5328,
+  "idMetacard": 421084,
+  "dateAdded": "2023-06-20 17:11:52"
+ },
+ {
+  "idProduct": 778391,
+  "name": "Yanma [Silent Wing]",
+  "idCategory": 51,
+  "categoryName": "Pokémon Single",
+  "idExpansion": 5212,
+  "idMetacard": 437119,
+  "dateAdded": "2024-07-16 20:44:50"
+ },
+ {
+  "idProduct": 778392,
+  "name": "Yanmega [Gyro Shockwave]",
+  "idCategory": 51,
+  "categoryName": "Pokémon Single",
+  "idExpansion": 5212,
+  "idMetacard": 437120,
+  "dateAdded": "2024-07-16 20:45:45"
+ },
+ {
+  "idProduct": 778393,
+  "name": "Veluza ex [Razor Fin | Purging Strike]",
+  "idCategory": 51,
+  "categoryName": "Pokémon Single",
+  "idExpansion": 5212,
+  "idMetacard": 437121,
+  "dateAdded": "2024-07-16 20:47:04"
+ },
+ {
+  "idProduct": 778394,
+  "name": "Ditto [Transformative Start | Splup]",
+  "idCategory": 51,
+  "categoryName": "Pokémon Single",
+  "idExpansion": 5212,
+  "idMetacard": 421211,
+  "dateAdded": "2024-07-16 20:48:13"
+ },
+ {
+  "idProduct": 778395,
+  "name": "Super Rod",
+  "idCategory": 51,
+  "categoryName": "Pokémon Single",
+  "idExpansion": 5212,
+  "idMetacard": 224641,
+  "dateAdded": "2024-07-16 20:49:47"
+ },
+ {
+  "idProduct": 778396,
+  "name": "Professor's Research - Professor Sada",
+  "idCategory": 51,
+  "categoryName": "Pokémon Single",
+  "idExpansion": 5212,
+  "idMetacard": 444401,
+  "dateAdded": "2024-07-16 20:50:14"
+ },
+ {
+  "idProduct": 778397,
+  "name": "Professor's Research - Professor Turo",
+  "idCategory": 51,
+  "categoryName": "Pokémon Single",
+  "idExpansion": 5212,
+  "idMetacard": 444402,
+  "dateAdded": "2024-07-16 20:50:30"
+ },
+ {
+  "idProduct": 778398,
+  "name": "Billy & O'Nare",
+  "idCategory": 51,
+  "categoryName": "Pokémon Single",
+  "idExpansion": 5212,
+  "idMetacard": 437122,
+  "dateAdded": "2024-07-16 20:52:38"
+ },
+ {
+  "idProduct": 778399,
+  "name": "Carmine",
+  "idCategory": 51,
+  "categoryName": "Pokémon Single",
+  "idExpansion": 5212,
+  "idMetacard": 433784,
+  "dateAdded": "2024-07-16 20:53:07"
+ },
+ {
+  "idProduct": 778400,
+  "name": "Noctowl [Jewel Seeker | Speed Wing]",
+  "idCategory": 51,
+  "categoryName": "Pokémon Single",
+  "idExpansion": 5212,
+  "idMetacard": 437123,
+  "dateAdded": "2024-07-16 20:54:42"
+ },
+ {
+  "idProduct": 778401,
+  "name": "Basic Grass Energy",
+  "idCategory": 51,
+  "categoryName": "Pokémon Single",
+  "idExpansion": 5212,
+  "idMetacard": 439728,
+  "dateAdded": "2024-07-16 20:59:08"
+ },
+ {
+  "idProduct": 778402,
+  "name": "Basic Fire Energy",
+  "idCategory": 51,
+  "categoryName": "Pokémon Single",
+  "idExpansion": 5212,
+  "idMetacard": 439729,
+  "dateAdded": "2024-07-16 20:59:29"
+ },
+ {
+  "idProduct": 778403,
+  "name": "Basic Water Energy",
+  "idCategory": 51,
+  "categoryName": "Pokémon Single",
+  "idExpansion": 5212,
+  "idMetacard": 439730,
+  "dateAdded": "2024-07-16 20:59:46"
+ },
+ {
+  "idProduct": 778404,
+  "name": "Basic Lightning Energy",
+  "idCategory": 51,
+  "categoryName": "Pokémon Single",
+  "idExpansion": 5212,
+  "idMetacard": 439731,
+  "dateAdded": "2024-07-16 21:00:07"
+ },
+ {
+  "idProduct": 778405,
+  "name": "Basic Psychic Energy",
+  "idCategory": 51,
+  "categoryName": "Pokémon Single",
+  "idExpansion": 5212,
+  "idMetacard": 439732,
+  "dateAdded": "2024-07-16 21:00:25"
+ },
+ {
+  "idProduct": 778406,
+  "name": "Basic Fighting Energy",
+  "idCategory": 51,
+  "categoryName": "Pokémon Single",
+  "idExpansion": 5212,
+  "idMetacard": 439733,
+  "dateAdded": "2024-07-16 21:00:43"
+ },
+ {
+  "idProduct": 778407,
+  "name": "Basic Darkness Energy",
+  "idCategory": 51,
+  "categoryName": "Pokémon Single",
+  "idExpansion": 5212,
+  "idMetacard": 439734,
+  "dateAdded": "2024-07-16 21:00:58"
+ },
+ {
+  "idProduct": 778408,
+  "name": "Basic Metal Energy",
+  "idCategory": 51,
+  "categoryName": "Pokémon Single",
+  "idExpansion": 5212,
+  "idMetacard": 439735,
+  "dateAdded": "2024-07-16 21:01:16"
+ }
+]
