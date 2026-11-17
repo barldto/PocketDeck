@@ -124,7 +124,13 @@ async function pool(items,size,fn){let i=0;await Promise.all(Array.from({length:
 await rm('cm-map',{recursive:true,force:true});
 let mapped=0,unresolved=0;const setExpansions={},taken=new Set(),plan=[];
 for(const lang of ['en','ja'])for(const [set,cards] of cardsOf(lang)){
-  const named=cards.map(card=>({...card,key:(n=>n&&baseName(n))(englishName(lang,card.name))})).filter(card=>card.key);
+  // Alternative spellings Cardmarket uses for old special cards: "M X EX" = "Mega X EX", "★" = "Star", "δ" = "Delta Species".
+  const variantsOf=key=>{const out=[key];
+    if(/^m /.test(key))out.push(key.replace(/^m /,'mega '));
+    if(key.includes('★'))out.push(key.replace(/\s*★/,' star'),key.replace(/\s*★/,' gold star'),key.replace(/\s*★/,''));
+    if(key.includes('δ'))out.push(key.replace(/\s*δ/,' delta species'),key.replace(/\s*δ/,' (delta species)'),key.replace(/\s*δ/,''));
+    return out;};
+  const named=cards.map(card=>{const k=(n=>n&&baseName(n))(englishName(lang,card.name));return k?{...card,key:k,keys:variantsOf(k)}:null;}).filter(Boolean);
   plan.push({lang,set,cards:named,names:new Set(named.map(c=>c.key).filter(k=>!k.startsWith('*')))});
 }
 await pool(plan,6,async item=>{item.votes=await tcgdexVotes(item.lang,item.set,item.cards);});
@@ -138,7 +144,7 @@ for(const item of plan){if(item.fixed)continue;item.exp=chooseExpansion(item.nam
 plan.sort((a,b)=>(b.fixed?2:b.strength)-(a.fixed?2:a.strength));
 for(const item of plan){
   const exp=item.fixed||chooseExpansion(item.names,item.votes,taken);setExpansions[item.lang+':'+item.set]=exp;if(!exp)continue;taken.add(exp);
-  const byName=new Map();for(const card of item.cards){if(!byName.has(card.key))byName.set(card.key,[]);byName.get(card.key).push(card);}
+  const byName=new Map();for(const card of item.cards){const key=card.keys.find(k=>byExpansionName.has(exp+'|'+k))||card.key;if(!byName.has(key))byName.set(key,[]);byName.get(key).push(card);}
   const out={};
   for(const [key,group] of byName){
     const candidates=key.startsWith("*'s ")?[...expNames.get(exp)].filter(name=>name.endsWith(key.slice(1))).flatMap(name=>byExpansionName.get(exp+'|'+name)).sort((a,b)=>a-b):byExpansionName.get(exp+'|'+key);if(!candidates?.length)continue;
