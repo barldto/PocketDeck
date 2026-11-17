@@ -14,7 +14,8 @@ async function json(url){const response=await fetch(url,{headers:UA});if(!respon
 const rows=data=>Array.isArray(data)?data:Object.values(data).find(Array.isArray)||[];
 const cents=value=>typeof value==='number'&&Number.isFinite(value)&&value>0?Math.round(value*100):0;
 // "Yanma [Whirlwind | Razor Wing]" -> "yanma"; "Charizard ex (V.2)" -> "charizard ex"
-const baseName=name=>String(name||'').replace(/\s*\[.*\]\s*$/,'').replace(/\s*\((?:V\.?\s*\d+|Version\s*\d+)\)\s*$/i,'').replace(/[’`]/g,"'").trim().toLowerCase();
+const baseName=name=>String(name||'').replace(/\s*\[.*\]\s*$/,'').replace(/\s*\((?:V\.?\s*\d+|Version\s*\d+)\)\s*$/i,'')
+  .replace(/&female;/gi,'♀').replace(/&male;/gi,'♂').replace(/&amp;/gi,'&').replace(/[’`]/g,"'").replace(/[-–]/g,' ').replace(/é/g,'e').replace(/\s*([♀♂])/g,'$1').replace(/\s*([♀♂])/g,'$1').replace(/\s+/g,' ').trim().toLowerCase();
 const numeric=id=>{const n=parseInt(String(id).replace(/^\D+/,''),10);return Number.isFinite(n)?n:1e9;};
 
 /* ---------- 1. Cardmarket files ---------- */
@@ -23,7 +24,6 @@ const products=rows(productData),guides=rows(guideData);
 if(products.length<1000||guides.length<1000)throw new Error(`Unexpectedly small files: ${products.length} products, ${guides.length} price rows`);
 const updated=guideData.createdAt||productData.createdAt||new Date().toISOString();
 
-if(process.env.PD_DEBUG){const want=new Set([6037,5996,6092,3851,6189,5519,5782]);await writeFile('debug-names.json',JSON.stringify(products.filter(p=>want.has(p.idExpansion)).map(p=>[p.idExpansion,p.idProduct,p.name])));}
 /* ---------- 2. Price shards ---------- */
 // Row per product: [trend, avg, low, avg7, avg30, trendHolo, avgHolo, lowHolo] in cents (0 = no value).
 const shards=Array.from({length:SHARDS},()=>({}));let priced=0;
@@ -47,14 +47,39 @@ const catalog=JSON.parse(await readFile('catalog.json','utf8'));
 const html=await readFile('index.html','utf8');
 const species=JSON.parse(html.match(/<script id="pd-data" type="application\/json">([\s\S]*?)<\/script>/)[1]).species;
 const jaNames=species.map(s=>[s.nameJA,s.nameEN]).filter(([ja])=>ja).sort((a,b)=>b[0].length-a[0].length);
+const TRAINERS={'ヒビキ':'Ethan','シロナ':'Cynthia','カスミ':'Misty','ペパー':'Arven','N':'N','ナンジャモ':'Iono','リーリエ':'Lillie','ホップ':'Hop','ロケット団':'Team Rocket','タケシ':'Brock','エリカ':'Erika','ナツメ':'Sabrina','サカキ':'Giovanni','マチス':'Lt. Surge','カツラ':'Blaine','キョウ':'Koga','マリィ':'Marnie','ダイゴ':'Steven','スグリ':'Kieran','ネモ':'Nemona','ボタン':'Penny','シトロン':'Clemont','ミカン':'Jasmine','グリーン':'Blue','レッド':'Red'};
+const REGIONS={'アローラ':'Alolan','ガラル':'Galarian','ヒスイ':'Hisuian','パルデア':'Paldean'};
+const MASKS={'みどりのめん':'Teal Mask','いどのめん':'Wellspring Mask','かまどのめん':'Hearthflame Mask','いしずえのめん':'Cornerstone Mask'};
+const SUFFIX=/^(ex|EX|GX|V|VMAX|VSTAR|LV\.X|BREAK|V-UNION|δ)$/;
+function pokemonEN(text,allowMega=true){
+  let n=text.trim(),prefix='';
+  for(const [jp,en] of Object.entries(REGIONS))if(n.startsWith(jp)){prefix=en+' ';n=n.slice(jp.length).trim();break;}
+  const hit=jaNames.find(([ja])=>n.startsWith(ja));
+  if(hit){
+    let rest=n.slice(hit[0].length).trim(),name=hit[1],lead=prefix;
+    for(const [jp,en] of Object.entries(MASKS))if(rest.startsWith(jp)){lead=en+' '+lead;rest=rest.slice(jp.length).trim();}
+    if(rest.startsWith('アカツキ')){lead='Bloodmoon '+lead;rest=rest.slice(4).trim();}
+    if(!rest)return lead+name;
+    if(SUFFIX.test(rest))return lead+name+' '+rest;
+  }
+  // Mega forms ("メガリザードンXex"); tried last because メガニウム / メガヤンマ are real names.
+  if(allowMega&&n.startsWith('メガ')){
+    const inner=n.slice(2).trim(),m=inner.match(/^(.+?)([XY])?\s*(ex|EX)?$/);
+    const base=m&&pokemonEN(m[1],false);if(base&&!/\s/.test(base.replace(/^(Alolan|Galarian|Hisuian|Paldean) /,'')))return 'Mega '+base+(m[2]?' '+m[2]:'')+(m[3]?' '+m[3]:'');
+  }
+  return null;
+}
 function englishName(lang,name){
   if(lang==='en')return name;
-  const n=String(name).normalize('NFKC').trim();
-  const hit=jaNames.find(([ja])=>n.startsWith(ja.normalize('NFKC')));if(!hit)return null;
-  const suffix=n.slice(hit[0].normalize('NFKC').length).trim();
-  if(!suffix)return hit[1];
-  if(/^(ex|EX|GX|V|VMAX|VSTAR|LV\.X|BREAK)$/.test(suffix))return hit[1]+' '+suffix;
-  return null; // regional forms, trainer's Pokémon etc.: leave to TCGdex
+  const n=String(name).normalize('NFKC').replace(/\s+/g,' ').trim();
+  const direct=pokemonEN(n);if(direct)return direct;
+  if(n.includes('&')){ // Tag Team: "ピカチュウ&ゼクロムGX" -> "Pikachu & Zekrom GX"
+    const m=n.match(/^(.+?)\s*(GX|ex|EX)?$/),parts=m[1].split('&').map(p=>pokemonEN(p));
+    if(parts.every(Boolean))return parts.join(' & ')+(m[2]?' '+m[2]:'');
+  }
+  const owned=n.match(/^(.+?)の(.+)$/); // Trainer's Pokémon: "カスミのラプラス" -> "Misty's Lapras"
+  if(owned){const pokemon=pokemonEN(owned[2]);if(pokemon)return TRAINERS[owned[1]]?TRAINERS[owned[1]]+"'s "+pokemon:"*'s "+pokemon;}
+  return null; // trainer cards, energy etc.: leave to TCGdex
 }
 function cardsOf(lang){
   const sets=new Map();
@@ -96,7 +121,7 @@ await rm('cm-map',{recursive:true,force:true});
 let mapped=0,unresolved=0;const setExpansions={},taken=new Set(),plan=[];
 for(const lang of ['en','ja'])for(const [set,cards] of cardsOf(lang)){
   const named=cards.map(card=>({...card,key:(n=>n&&baseName(n))(englishName(lang,card.name))})).filter(card=>card.key);
-  plan.push({lang,set,cards:named,names:new Set(named.map(c=>c.key))});
+  plan.push({lang,set,cards:named,names:new Set(named.map(c=>c.key).filter(k=>!k.startsWith('*')))});
 }
 await pool(plan,6,async item=>{item.votes=await tcgdexVotes(item.lang,item.set,item.cards);});
 // 1. TCGdex is unanimous for a set (>= 3 sampled cards, >= 90 % one expansion): trust it. Several small sets may share one expansion.
@@ -112,7 +137,7 @@ for(const item of plan){
   const byName=new Map();for(const card of item.cards){if(!byName.has(card.key))byName.set(card.key,[]);byName.get(card.key).push(card);}
   const out={};
   for(const [key,group] of byName){
-    const candidates=byExpansionName.get(exp+'|'+key);if(!candidates?.length)continue;
+    const candidates=key.startsWith("*'s ")?[...expNames.get(exp)].filter(name=>name.endsWith(key.slice(1))).flatMap(name=>byExpansionName.get(exp+'|'+name)).sort((a,b)=>a-b):byExpansionName.get(exp+'|'+key);if(!candidates?.length)continue;
     group.sort((a,b)=>numeric(a.localId)-numeric(b.localId)||String(a.localId).localeCompare(String(b.localId)));
     // Cardmarket creates the versions of one card in collector-number order, so the n-th version is the n-th card.
     if(group.length===candidates.length){group.forEach((card,i)=>{out[card.localId]=[candidates[i],...candidates];mapped++;});}

@@ -467,10 +467,17 @@ lucide.createIcons({icons});\``);if(typeof document>"u")throw new Error("`create
     }
     return Array.from(new Set(loose));
   }
+  const KO_TRAINERS={'ヒビキ':'광','シロナ':'난천','カスミ':'이슬','ペパー':'페퍼','N':'N','ナンジャモ':'모야모','リーリエ':'릴리에','ホップ':'호브','ロケット団':'로켓단','タケシ':'웅','エリカ':'민화','ナツメ':'초련','サカキ':'비주기','マチス':'마티스','カツラ':'강연','キョウ':'독수','マリィ':'마리','ダイゴ':'성호'};
+  const KO_REGIONS={'アローラ':'알로라','ガラル':'가라르','ヒスイ':'히스이','パルデア':'팔데아'};
   function koreanReference(card,species){
     let aliases=koreanAliases.get(species);
-    if(!aliases){const names=species.filter(p=>p.nameKO&&p.nameJA).sort((a,b)=>b.nameJA.length-a.nameJA.length);aliases={byName:new Map(names.map(p=>[p.nameJA,p.nameKO])),pattern:new RegExp(names.map(p=>p.nameJA.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|'))};koreanAliases.set(species,aliases);}
-    const name=String(card.name).replace(aliases.pattern,match=>aliases.byName.get(match));
+    if(!aliases){const names=species.filter(p=>p.nameKO&&p.nameJA).sort((a,b)=>b.nameJA.length-a.nameJA.length);aliases={byName:new Map(names.map(p=>[p.nameJA,p.nameKO])),pattern:new RegExp(names.map(p=>p.nameJA.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|'),'g')};koreanAliases.set(species,aliases);}
+    // Korean names: trainer's Pokémon ("カスミのラプラス" -> "이슬의 라프라스"), regional forms, tag teams. Untranslatable rest -> keep Japanese.
+    let name=String(card.name).normalize('NFKC'),owner='';
+    const owned=name.match(/^(.+?)の(.+)$/);if(owned&&KO_TRAINERS[owned[1]]){owner=KO_TRAINERS[owned[1]]+'의 ';name=owned[2];}
+    name=name.replace(/^(アローラ|ガラル|ヒスイ|パルデア)\s*/,m=>KO_REGIONS[m.trim()]+' ').replace(aliases.pattern,match=>aliases.byName.get(match)).replace(/^メガ/,'메가 ').replace(/&/g,' & ');
+    name=(owner+name).replace(/\s+/g,' ').trim();
+    if(/[぀-ヿ一-鿿]/.test(name))name=String(card.name);
     return {...card,name,catalogLanguage:'ja',priceUnavailable:undefined};
   }
   function validEntries(entries){
