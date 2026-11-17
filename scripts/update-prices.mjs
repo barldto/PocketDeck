@@ -147,4 +147,26 @@ for(const item of plan){
 }
 await mkdir('cm-map',{recursive:true});await writeFile('cm-map/votes.json',JSON.stringify(voteCache));
 await writeFile('cm-map/sets.json',JSON.stringify(setExpansions));
+
+/* ---------- 4. Self-check: 250 random EN + 250 JP cards, app rule vs. TCGdex ---------- */
+if(process.env.PD_REPORT){
+  const rnd=(seed=>()=>((seed=Math.imul(seed^seed>>>15,2246822519)+0x6d2b79f5>>>0)/4294967296))(Date.now()%100000);
+  const maps=new Map(),report={updated,checked:0,agree:0,corrected:0,noPrice:0,tcgdexMissing:0,byLang:{},examples:[]};
+  async function mapOf(lang,set){const key=lang+'/'+set;if(!maps.has(key)){try{maps.set(key,JSON.parse(await readFile(`cm-map/${key}.json`,'utf8')));}catch{maps.set(key,{});}}return maps.get(key);}
+  const priceOf=id=>id?shards[id%SHARDS][id]?.[0]||shards[id%SHARDS][id]?.[1]||0:0;
+  const picks=[];
+  for(const lang of ['en','ja']){const pool2=plan.filter(p=>p.lang===lang&&setExpansions[lang+':'+p.set]).flatMap(p=>cardsOf(lang).get(p.set).map(c=>({lang,set:p.set,...c})));for(let i=0;i<250&&pool2.length;i++)picks.push(pool2.splice(Math.floor(rnd()*pool2.length),1)[0]);}
+  await pool(picks,8,async card=>{
+    let detail;try{detail=await json(`${TCGDEX}${card.lang}/cards/${encodeURIComponent(card.set+'-'+card.localId)}`);}catch{return;}
+    const tcg=Number(detail.pricing?.cardmarket?.idProduct||detail.thirdParty?.cardmarket||detail.variants_detailed?.find(v=>v.thirdParty?.cardmarket)?.thirdParty?.cardmarket)||0;
+    const entry=(await mapOf(card.lang,card.set))[card.localId];let final=tcg;
+    if(entry){const [chosen,...c]=entry;const official=Number(detail.set?.cardCount?.official)||0,secret=official>0&&parseInt(card.localId,10)>official;
+      final=tcg&&c.includes(tcg)?tcg:chosen?chosen:secret&&c.length?c.reduce((b,id)=>priceOf(id)>priceOf(b)?id:b,c[0]):tcg;}
+    const L=report.byLang[card.lang]??={checked:0,agree:0,corrected:0,noPrice:0,tcgdexMissing:0};
+    for(const r of [report,L]){r.checked++;if(!tcg)r.tcgdexMissing++;if(final&&final===tcg)r.agree++;if(final&&tcg&&final!==tcg)r.corrected++;if(!priceOf(final))r.noPrice++;}
+    if(final!==tcg||!priceOf(final))report.examples.push({card:card.lang+':'+card.set+'-'+card.localId,name:detail.name,rarity:detail.rarity,tcgdex:[tcg,byId.get(tcg)?.name,byId.get(tcg)?.idExpansion,priceOf(tcg)/100],final:[final,byId.get(final)?.name,byId.get(final)?.idExpansion,priceOf(final)/100],setExpansion:setExpansions[card.lang+':'+card.set],entry});
+  });
+  await writeFile('cm-map/report.json',JSON.stringify(report,null,1));
+  console.log('Self-check:',JSON.stringify({...report,examples:report.examples.length}));
+}
 console.log(`Guide ${updated}: ${priced} prices in ${SHARDS} shards. Sets linked: ${Object.values(setExpansions).filter(Boolean).length}/${plan.length}. Cards resolved: ${mapped}, ambiguous: ${unresolved}.`);

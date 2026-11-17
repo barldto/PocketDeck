@@ -28,6 +28,8 @@ jobs:
           node-version: 22
       - name: Preisliste und Zuordnung erstellen
         run: node scripts/update-prices.mjs
+        env:
+          PD_REPORT: '1'
       - name: Änderungen speichern
         run: |
           git add -A prices cm-map
