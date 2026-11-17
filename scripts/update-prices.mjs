@@ -47,13 +47,15 @@ const catalog=JSON.parse(await readFile('catalog.json','utf8'));
 const html=await readFile('index.html','utf8');
 const species=JSON.parse(html.match(/<script id="pd-data" type="application\/json">([\s\S]*?)<\/script>/)[1]).species;
 const jaNames=species.map(s=>[s.nameJA,s.nameEN]).filter(([ja])=>ja).sort((a,b)=>b[0].length-a[0].length);
-const TRAINERS={'ヒビキ':'Ethan','シロナ':'Cynthia','カスミ':'Misty','ペパー':'Arven','N':'N','ナンジャモ':'Iono','リーリエ':'Lillie','ホップ':'Hop','ロケット団':'Team Rocket','タケシ':'Brock','エリカ':'Erika','ナツメ':'Sabrina','サカキ':'Giovanni','マチス':'Lt. Surge','カツラ':'Blaine','キョウ':'Koga','マリィ':'Marnie','ダイゴ':'Steven','スグリ':'Kieran','ネモ':'Nemona','ボタン':'Penny','シトロン':'Clemont','ミカン':'Jasmine','グリーン':'Blue','レッド':'Red'};
+const TRAINERS={'R団':'Rocket','ヒビキ':'Ethan','シロナ':'Cynthia','カスミ':'Misty','ペパー':'Arven','N':'N','ナンジャモ':'Iono','リーリエ':'Lillie','ホップ':'Hop','ロケット団':'Team Rocket','タケシ':'Brock','エリカ':'Erika','ナツメ':'Sabrina','サカキ':'Giovanni','マチス':'Lt. Surge','カツラ':'Blaine','キョウ':'Koga','マリィ':'Marnie','ダイゴ':'Steven','スグリ':'Kieran','ネモ':'Nemona','ボタン':'Penny','シトロン':'Clemont','ミカン':'Jasmine','グリーン':'Blue','レッド':'Red'};
 const REGIONS={'アローラ':'Alolan','ガラル':'Galarian','ヒスイ':'Hisuian','パルデア':'Paldean'};
 const MASKS={'みどりのめん':'Teal Mask','いどのめん':'Wellspring Mask','かまどのめん':'Hearthflame Mask','いしずえのめん':'Cornerstone Mask'};
 const SUFFIX=/^(ex|EX|GX|V|VMAX|VSTAR|LV\.X|BREAK|V-UNION|δ)$/;
+const PREFIXES={'わるい':'Dark','ダーク':'Dark','かがやく':'Radiant','ひかる':'Shining','ライト':'Light'};
 function pokemonEN(text,allowMega=true){
   let n=text.trim(),prefix='';
-  for(const [jp,en] of Object.entries(REGIONS))if(n.startsWith(jp)){prefix=en+' ';n=n.slice(jp.length).trim();break;}
+  for(const [jp,en] of Object.entries(PREFIXES))if(n.startsWith(jp)&&jaNames.some(([ja])=>n.slice(jp.length).trim().startsWith(ja))){prefix=en+' ';n=n.slice(jp.length).trim();break;}
+  for(const [jp,en] of Object.entries(REGIONS))if(n.startsWith(jp)){prefix+=en+' ';n=n.slice(jp.length).trim();break;}
   const hit=jaNames.find(([ja])=>n.startsWith(ja));
   if(hit){
     let rest=n.slice(hit[0].length).trim(),name=hit[1],lead=prefix;
@@ -72,6 +74,8 @@ function pokemonEN(text,allowMega=true){
 function englishName(lang,name){
   if(lang==='en')return name;
   const n=String(name).normalize('NFKC').replace(/\s+/g,' ').trim();
+  // Some old Japanese entries carry English names ("Electabuzz", "Mew Ex"): use them as they are.
+  if(/^[\x20-\x7e]+$/.test(n)&&/[a-z]{3}/i.test(n))return n.replace(/\s+Ex$/,' ex').replace(/^(\w)/,c=>c.toUpperCase());
   const direct=pokemonEN(n);if(direct)return direct;
   if(n.includes('&')){ // Tag Team: "ピカチュウ&ゼクロムGX" -> "Pikachu & Zekrom GX"
     const m=n.match(/^(.+?)\s*(GX|ex|EX)?$/),parts=m[1].split('&').map(p=>pokemonEN(p));
