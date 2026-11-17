@@ -3499,14 +3499,14 @@ self.onmessage=async event=>{
   }
   async function cardDetail(lang,id,force=false){
     const key=ref(lang,id),existing=knownDetails.get(key)||await db.read('cache','card:'+key);
-    if(existing&&!force&&Date.now()-existing.fetchedAt<21600000){knownDetails.set(key,existing);return applyLivePrice(existing.value);}
+    if(existing&&!force&&Date.now()-existing.fetchedAt<21600000){knownDetails.set(key,existing);return livePrice(existing.value,lang);}
     const requestKey=key+(force?':fresh':'');if(pendingRequests.has(requestKey))return pendingRequests.get(requestKey);
     const request=(async()=>{try{
       let raw;
       try{raw=await fetchJSON(`https://api.tcgdex.net/v2/${lang==='ko'?'ja':lang}/cards/${encodeURIComponent(id)}`);if(lang==='ko')raw=C.koreanReference(raw,species);}
       catch(error){if(['en','ko'].includes(lang)||error.status!==404||!(catalogues.en||[]).some(card=>card.id===id))throw error;raw=await fetchJSON(`https://api.tcgdex.net/v2/en/cards/${encodeURIComponent(id)}`);raw.catalogLanguage='en';const localized=(catalogues[lang]||[]).find(card=>card.id===id)?.name;if(localized)raw.name=localized;else{const pokemon=species.find(s=>s.id===raw.dexId?.[0]);if(pokemon&&C.normalize(raw.name)===C.normalize(pokemon.nameEN))raw.name=lang==='de'?pokemon.nameDE:lang==='ja'?pokemon.nameJA:raw.name;}}
       if(raw.id!==id||!raw.set)throw Error('Ungültige Kartendaten erhalten.');
-      const value=applyLivePrice(safeCard(raw)),cached={value,fetchedAt:Date.now()};knownDetails.set(key,cached);
+      const value=await livePrice(safeCard(raw),lang),cached={value,fetchedAt:Date.now()};knownDetails.set(key,cached);
       try{await db.put('cache','card:'+key,cached);}catch{/* A catalog cache failure must not overwrite the collection. */}
       return value;
     }catch(error){if(!force&&existing)return existing.value;const owned=copies(id,lang)[0];if(!force&&owned)return owned.card;throw error;}
@@ -3550,34 +3550,50 @@ self.onmessage=async event=>{
     if(entries.length&&Date.now()-lastBackupAt>7*864e5)html+=`<section class="pd-warn pd-warn-soft"><span class="pd-warn-icon">${icon('cloud-upload')}</span><div class="pd-grow"><strong>${lastBackupAt?'Letzte Sicherung vor '+Math.floor((Date.now()-lastBackupAt)/864e5)+' Tagen':'Noch keine Sicherung'}</strong><p class="pd-small">Ein Tipp sichert deine ${entries.length} Einträge in iCloud Drive oder „Dateien“.</p></div><button type="button" class="pd-chip" data-action="export">Sichern</button></section>`;
     return html;
   }
-  /* Live prices: prices.json is rebuilt daily on GitHub from Cardmarket's official price guide and loaded at every start. */
-  let livePrices=null;
-  async function loadLivePrices(){
-    try{const response=await fetch('./prices.json',{cache:'no-store'});if(!response.ok)return false;const data=await response.json();if(data?.format!=='PocketDeckPrices'||!data.p)return false;livePrices=data;return true;}
-    catch{return false;}
+  /* Live prices: GitHub rebuilds them daily from Cardmarket's official price guide, together with an own card -> product mapping.
+     At every start the app loads only the price shards and set mappings that its cards need. */
+  let priceMeta=null;const priceShards=new Map(),cmMaps=new Map();
+  const mapLang=lang=>lang==='ja'||lang==='ko'?'ja':'en',stamp=()=>encodeURIComponent(priceMeta?.updated||'');
+  async function fetchJSON0(url,fallback){try{const r=await fetch(url,{cache:'no-store'});return r.ok?await r.json():fallback;}catch{return fallback;}}
+  async function loadPriceMeta(){const meta=await fetchJSON0('./prices/meta.json',null);if(meta?.format==='PocketDeckPrices'&&meta.shards){if(meta.updated!==priceMeta?.updated)priceShards.clear();priceMeta=meta;}return !!priceMeta;}
+  function tcgdexIds(card){return [card.pricing?.cardmarket?.tcgdexId,card.pricing?.cardmarket?.idProduct,...(card.variants_detailed||[]).flatMap(v=>[v.pricing?.cardmarket?.tcgdexId,v.pricing?.cardmarket?.idProduct,v.thirdParty?.cardmarket])].map(Number).filter(n=>Number.isInteger(n)&&n>0);}
+  function resolveProduct(card,lang,tcgdexId){
+    const entry=cmMaps.get(mapLang(lang)+'/'+card.set?.id)?.[card.localId];if(!entry)return tcgdexId||0;
+    const [chosen,...candidates]=entry;if(chosen)return chosen;
+    if(tcgdexId&&candidates.includes(tcgdexId))return tcgdexId;
+    const official=Number(card.set?.cardCount?.official)||0,secret=official>0&&parseInt(card.localId,10)>official;
+    // Ambiguous and TCGdex points outside this set: a secret rare is the most expensive version of the card.
+    if(secret&&candidates.length)return candidates.reduce((best,id)=>(rowOf(id)?.[0]||0)>(rowOf(best)?.[0]||0)?id:best,candidates[0]);
+    return tcgdexId||0;
   }
-  function liveQuote(id,secret){
-    if(!livePrices||!Number.isInteger(id)||id<=0)return null;
-    let pid=id;const siblings=livePrices.s?.[id]||[],price=other=>livePrices.p[other]?.[0]||livePrices.p[other]?.[1]||0;
-    // TCGdex sometimes links a secret rare (AR/SR above the set size) to the regular print of the same card.
-    // Correct only the clear case: the linked product is the cheapest of exactly two versions.
-    if(secret&&siblings.length===1&&price(siblings[0])>price(id))pid=siblings[0];
-    const row=livePrices.p[pid];if(!row)return null;const eur=v=>v?v/100:null;
-    return {unit:'EUR',idProduct:pid,updated:livePrices.updated,trend:eur(row[0]),avg:eur(row[1]),low:eur(row[2]),avg7:eur(row[3]),avg30:eur(row[4]),'trend-holo':eur(row[5]),'avg-holo':eur(row[6]),'low-holo':eur(row[7]),source:'cardmarket',corrected:pid!==id?id:undefined};
+  function rowOf(id){return priceShards.get(id%priceMeta.shards)?.[id]||null;}
+  async function preparePrices(list){
+    if(!priceMeta)return false;
+    const sets=[...new Set(list.map(({card,lang})=>mapLang(lang)+'/'+card.set?.id).filter(k=>!k.endsWith('/undefined')&&!cmMaps.has(k)))];
+    await Promise.all(sets.map(async key=>cmMaps.set(key,await fetchJSON0(`./cm-map/${key.split('/').map(encodeURIComponent).join('/')}.json?v=${stamp()}`,{}))));
+    const shards=new Set();
+    for(const {card,lang} of list){const own=tcgdexIds(card);for(const id of [...own,...(cmMaps.get(mapLang(lang)+'/'+card.set?.id)?.[card.localId]||[])])if(id>0)shards.add(id%priceMeta.shards);}
+    await Promise.all([...shards].filter(i=>!priceShards.has(i)).map(async i=>priceShards.set(i,await fetchJSON0(`./prices/${i}.json?v=${stamp()}`,{}))));
+    return true;
   }
-  function applyLivePrice(card){
-    if(!livePrices||!card)return card;
-    const official=Number(card.set?.cardCount?.official)||0,number=parseInt(card.localId,10),secret=official>0&&number>official;
-    const originalId=q=>Number(q?.corrected||q?.idProduct);
-    const top=card.pricing?.cardmarket?liveQuote(originalId(card.pricing.cardmarket),secret):null;let changed=!!top;
-    const variants=card.variants_detailed?.map(v=>{const q=liveQuote(originalId(v.pricing?.cardmarket)||Number(v.thirdParty?.cardmarket),secret);if(!q)return v;changed=true;return {...v,pricing:{...(v.pricing||{}),cardmarket:q}};});
-    return changed?{...card,pricing:top?{...(card.pricing||{}),cardmarket:top}:card.pricing,variants_detailed:variants||card.variants_detailed}:card;
+  function quoteFor(id,tcgdexId){
+    const row=id?rowOf(id):null;if(!row)return null;const eur=v=>v?v/100:null;
+    return {unit:'EUR',idProduct:id,tcgdexId:tcgdexId||undefined,updated:priceMeta.updated,trend:eur(row[0]),avg:eur(row[1]),low:eur(row[2]),avg7:eur(row[3]),avg30:eur(row[4]),'trend-holo':eur(row[5]),'avg-holo':eur(row[6]),'low-holo':eur(row[7]),source:'cardmarket',corrected:tcgdexId&&id!==tcgdexId?true:undefined};
   }
+  function applyLivePrice(card,lang){
+    if(!priceMeta||!card)return card;
+    const original=q=>Number(q?.tcgdexId||q?.idProduct)||0;
+    const topId=original(card.pricing?.cardmarket),topQuote=quoteFor(resolveProduct(card,lang,topId),topId);let changed=!!topQuote;
+    const variants=card.variants_detailed?.map(v=>{const own=original(v.pricing?.cardmarket)||Number(v.thirdParty?.cardmarket)||topId;const q=quoteFor(resolveProduct(card,lang,own),own);if(!q)return v;changed=true;return {...v,pricing:{...(v.pricing||{}),cardmarket:q}};});
+    return changed?{...card,priceUnavailable:undefined,pricing:topQuote?{...(card.pricing||{}),cardmarket:topQuote}:card.pricing,variants_detailed:variants||card.variants_detailed}:card;
+  }
+  async function livePrice(card,lang){try{if(!priceMeta)await loadPriceMeta();if(await preparePrices([{card,lang}]))return applyLivePrice(card,lang);}catch{}return card;}
   async function refreshLivePrices(){
-    if(!await loadLivePrices()||!entries.length)return;
-    const updated=entries.map(e=>({...e,card:applyLivePrice(e.card)}));
-    if(JSON.stringify(updated.map(e=>e.card.pricing))===JSON.stringify(entries.map(e=>e.card.pricing)))return;
-    try{await mutate(current=>current.map(e=>({...e,card:applyLivePrice(e.card)})));if(['home','detail','album'].includes(page)&&!scan.busy)render();}catch{}
+    if(!await loadPriceMeta()||!entries.length)return;
+    await preparePrices(entries.map(e=>({card:e.card,lang:e.language})));
+    const before=JSON.stringify(entries.map(e=>[e.card.pricing,e.card.variants_detailed])),next=entries.map(e=>applyLivePrice(e.card,e.language));
+    if(JSON.stringify(next.map(c=>[c.pricing,c.variants_detailed]))===before)return;
+    try{await mutate(current=>current.map(e=>({...e,card:applyLivePrice(e.card,e.language)})));if(['home','detail','album'].includes(page)&&!scan.busy)render();}catch{}
   }
   function dexCard(){
     const owned=C.stats(entries).species,total=species.length,found=species.filter(s=>owned.has(s.id)).length,percent=total?found/total*100:0,label=new Intl.NumberFormat('de-DE',{maximumFractionDigits:1}).format(percent)+' %';
