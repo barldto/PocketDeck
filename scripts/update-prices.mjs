@@ -98,11 +98,16 @@ for(const lang of ['en','ja'])for(const [set,cards] of cardsOf(lang)){
   plan.push({lang,set,cards:named,names:new Set(named.map(c=>c.key))});
 }
 await pool(plan,6,async item=>{item.votes=await tcgdexVotes(item.lang,item.set,item.cards);});
-// Strongest matches first, so a clear set claims its expansion before a weaker look-alike can.
-for(const item of plan){item.exp=chooseExpansion(item.names,item.votes,new Set());const size=item.exp?expNames.get(item.exp).size:0;const inter=item.exp?[...item.names].filter(n=>expNames.get(item.exp).has(n)).length:0;item.strength=item.exp?inter/(item.names.size+size-inter):0;}
-plan.sort((a,b)=>b.strength-a.strength);
+// 1. TCGdex is unanimous for a set (>= 3 sampled cards, >= 90 % one expansion): trust it. Several small sets may share one expansion.
 for(const item of plan){
-  const exp=chooseExpansion(item.names,item.votes,taken);setExpansions[item.lang+':'+item.set]=exp;if(!exp)continue;taken.add(exp);
+  const total=Object.values(item.votes).reduce((a,b)=>a+b,0),top=Object.entries(item.votes).sort((a,b)=>b[1]-a[1])[0];
+  if(top&&top[1]>=3&&top[1]/total>=0.9&&expNames.has(Number(top[0]))){item.fixed=Number(top[0]);taken.add(item.fixed);}
+}
+// 2. Otherwise compare names; strongest matches first, so a clear set claims its expansion before a weaker look-alike can.
+for(const item of plan){if(item.fixed)continue;item.exp=chooseExpansion(item.names,item.votes,new Set());const size=item.exp?expNames.get(item.exp).size:0;const inter=item.exp?[...item.names].filter(n=>expNames.get(item.exp).has(n)).length:0;item.strength=item.exp?inter/(item.names.size+size-inter):0;}
+plan.sort((a,b)=>(b.fixed?2:b.strength)-(a.fixed?2:a.strength));
+for(const item of plan){
+  const exp=item.fixed||chooseExpansion(item.names,item.votes,taken);setExpansions[item.lang+':'+item.set]=exp;if(!exp)continue;taken.add(exp);
   const byName=new Map();for(const card of item.cards){if(!byName.has(card.key))byName.set(card.key,[]);byName.get(card.key).push(card);}
   const out={};
   for(const [key,group] of byName){

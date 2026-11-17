@@ -3559,8 +3559,9 @@ self.onmessage=async event=>{
   function tcgdexIds(card){return [card.pricing?.cardmarket?.tcgdexId,card.pricing?.cardmarket?.idProduct,...(card.variants_detailed||[]).flatMap(v=>[v.pricing?.cardmarket?.tcgdexId,v.pricing?.cardmarket?.idProduct,v.thirdParty?.cardmarket])].map(Number).filter(n=>Number.isInteger(n)&&n>0);}
   function resolveProduct(card,lang,tcgdexId){
     const entry=cmMaps.get(mapLang(lang)+'/'+card.set?.id)?.[card.localId];if(!entry)return tcgdexId||0;
-    const [chosen,...candidates]=entry;if(chosen)return chosen;
-    if(tcgdexId&&candidates.includes(tcgdexId))return tcgdexId;
+    // TCGdex stays authoritative while it points to a version of this card in the right Cardmarket set.
+    // The own mapping only replaces links into other sets or to other cards (e.g. Yanma AR -> a Yanma from another set).
+    const [chosen,...candidates]=entry;if(tcgdexId&&candidates.includes(tcgdexId))return tcgdexId;if(chosen)return chosen;
     const official=Number(card.set?.cardCount?.official)||0,secret=official>0&&parseInt(card.localId,10)>official;
     // Ambiguous and TCGdex points outside this set: a secret rare is the most expensive version of the card.
     if(secret&&candidates.length)return candidates.reduce((best,id)=>(rowOf(id)?.[0]||0)>(rowOf(best)?.[0]||0)?id:best,candidates[0]);
