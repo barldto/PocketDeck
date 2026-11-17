@@ -44,6 +44,7 @@ for(const ids of groups.values()){
   for(const id of priced)s[id]=priced.filter(other=>other!==id);
 }
 
+if(process.env.PD_DEBUG){const near=products.filter(x=>x.idProduct>=778370&&x.idProduct<=778470||x.idProduct>=719430&&x.idProduct<=719640&&/Charmeleon|Glutexo/i.test(x.name));await writeFile('debug-names.json',JSON.stringify(near,null,1));}
 const updated=guideData.createdAt||productData.createdAt||new Date().toISOString();
 const output={format:'PocketDeckPrices',version:1,source:'Cardmarket price guide',updated,p,s};
 const json=JSON.stringify(output);
