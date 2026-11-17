@@ -298,6 +298,33 @@ body{background:light-dark(#f4f5f9,#0d1015)}
 #app .pd-ring span{position:relative;font-size:14px;font-weight:760;letter-spacing:-.3px}
 #app .pd-scan-actions{display:flex;flex-direction:column;gap:10px}
 #app .pd-scan-actions .pd-small{margin:0}
+
+#app .pd-valuechart{position:relative;z-index:1;margin:2px 0 14px}
+#app .pd-valuechart svg{display:block;width:100%;height:74px;margin-top:8px}
+#app .pd-chartdelta{color:#fff;font-weight:650}
+#app .pd-chartnote{display:flex;gap:8px;align-items:flex-start;color:#ffffffd9;margin:0}
+#app .pd-chartchips{display:flex;gap:6px;margin-top:10px}
+#app .pd-chartchips button{flex:1;border:0;border-radius:999px;padding:6px 0;font-size:12px;font-weight:650;background:#ffffff1f;color:#ffffffd9}
+#app .pd-chartchips button[aria-pressed=true]{background:#fff;color:#5b4bff}
+#app .pd-list{display:flex;flex-direction:column;gap:8px}
+#app .pd-cardrow,#app .pd-setrow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:10px 12px;border-radius:18px;background:var(--pd-surface);border:1px solid var(--pd-line);color:var(--pd-fg);transition:transform .14s cubic-bezier(.2,.8,.2,1)}
+#app .pd-cardrow:active,#app .pd-setrow:active{transform:scale(.98)}
+#app .pd-cardrow strong,#app .pd-setrow strong{display:block;font-size:14px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#app .pd-cardrow small,#app .pd-setrow small{display:block;font-size:12px;color:var(--pd-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#app .pd-cardrow .pd-grow,#app .pd-setrow .pd-grow{min-width:0}
+#app .pd-cardrow-art{width:42px;flex-shrink:0}
+#app .pd-cardrow-art img,#app .pd-cardrow-art .pd-art{width:42px!important;height:auto;max-height:59px;border-radius:5px;display:block}
+#app .pd-cardrow-art .pd-reference-label,#app .pd-cardrow-art span:not(:first-child){display:none}
+#app .pd-cardrow-value{text-align:right;font-weight:700;font-size:14px;flex-shrink:0;font-variant-numeric:tabular-nums}
+#app .pd-cardrow-value small{display:block;font-weight:600;font-size:11.5px;margin-top:2px}
+#app .pd-up{color:#34c27a!important}
+#app .pd-down{color:#ff6b5e!important}
+#app .pd-setbar{display:block;height:6px;border-radius:99px;background:var(--pd-surface-2);overflow:hidden;margin-top:8px}
+#app .pd-setbar>span{display:block;height:100%;border-radius:99px;background:var(--pd-accent)}
+#app .pd-setbar-lg{height:8px;margin:0}
+#app .pd-setpct{font-weight:750;font-size:15px;flex-shrink:0;min-width:44px;text-align:right}
+#app .pd-settile{display:flex;flex-direction:column;gap:3px;min-width:0}
+#app .pd-tileprice{text-align:center;font-size:12px;font-weight:650;color:var(--pd-muted)}
 </style>
 </head>
 <body>
@@ -3443,7 +3470,7 @@ self.onmessage=async event=>{
   const typeNames={1:'Normal',2:'Kampf',3:'Flug',4:'Gift',5:'Boden',6:'Gestein',7:'Käfer',8:'Geist',9:'Stahl',10:'Feuer',11:'Wasser',12:'Pflanze',13:'Elektro',14:'Psycho',15:'Eis',16:'Drache',17:'Unlicht',18:'Fee'};
   const typeColors={1:'#a4a28a',2:'#d26558',3:'#a398d5',4:'#ab72b8',5:'#b99c69',6:'#a89c72',7:'#a6b64f',8:'#8472ac',9:'#8ca1ad',10:'#ed9860',11:'#6fa8dc',12:'#80b78a',13:'#e3c667',14:'#d98da8',15:'#8cc7cb',16:'#9b88da',17:'#8f867f',18:'#dca4c4'};
   let db,ready=false,entries=[],page='home',language='de',theme='dark',autoRefresh=true,filter='all',mode='pokemon',pokemonType=0,query='',limit=60,selection=null,reviewEntry=null,reviewConfirmed=false,manualScan=false,refreshing=false,mutations=Promise.resolve(),mutationBusy=false;
-  let lastBackupAt=0,persisted=false,navHidden=false;
+  let lastBackupAt=0,persisted=false,navHidden=false,valueHistory=[],priceSnapshots=[],chartRange='1M',setFilter='all',selectedSet=null,recordTimer=null;
   const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true,appleMobile=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
   let activeScanCanvas=null,scanCleanup=null,activeNeuralCapture=null,cancelNeural=null,neuralEnabled=true;
   let cancelTextOCR=null,textEnabled=true;
@@ -3498,7 +3525,7 @@ self.onmessage=async event=>{
     return null;
   }
   function mutate(fn){
-    const task=mutations.catch(()=>{}).then(async()=>{if(!ready)throw Error('Die lokale Sammlung ist noch nicht verfügbar.');const updated=C.validEntries(fn(entries));await db.commit(updated);entries=updated;mirrorCollection(updated);});
+    const task=mutations.catch(()=>{}).then(async()=>{if(!ready)throw Error('Die lokale Sammlung ist noch nicht verfügbar.');const updated=C.validEntries(fn(entries));await db.commit(updated);entries=updated;mirrorCollection(updated);clearTimeout(recordTimer);recordTimer=setTimeout(recordDaily,1500);});
     mutations=task;return task;
   }
   function safeCard(card){const product=card.variants_detailed?.map(v=>Number(v.thirdParty?.tcgplayer)).find(id=>Number.isSafeInteger(id)&&id>0&&id<1e9),referenceImage=publicReference(card.referenceImage)?card.referenceImage:product?`https://tcgplayer-cdn.tcgplayer.com/product/${product}_in_1000x1000.jpg`:undefined;return {id:card.id,localId:String(card.localId),name:card.name,image:card.image||undefined,set:card.set,dexId:card.dexId||[],hp:card.hp,types:card.types,rarity:card.rarity,category:card.category,illustrator:card.illustrator,variants:card.variants,variants_detailed:card.variants_detailed,pricing:card.pricing,catalogLanguage:card.catalogLanguage,priceUnavailable:card.priceUnavailable,referenceImage};}
@@ -3551,8 +3578,8 @@ self.onmessage=async event=>{
     root.style.colorScheme=theme==='system'?'light dark':theme;
     document.documentElement.style.colorScheme=root.style.colorScheme;
     header.innerHTML=`<button type="button" class="pd-brand-button" data-action="nav" data-page="home" aria-label="Zur Übersicht"><span class="pd-brandmark">${icon('layers-2')}</span><span class="pd-brand">pocketdeck</span></button><span class="pd-tag">${icon('shield-check')}Ohne Fotobestand</span>`;
-    nav.innerHTML=[['home','Übersicht','chart-no-axes-combined'],['album','Pokédex','grid-2x2'],['scan','Scannen','scan-line'],['settings','Optionen','sliders-horizontal']].map(([id,label,glyph])=>`<button type="button" data-action="nav" data-page="${id}" ${id===(['detail','review','pokemon'].includes(page)?'album':page)?'aria-current="page"':''}>${icon(glyph)}<span>${label}</span></button>`).join('');
-    ({home:renderHome,album:renderAlbum,scan:renderScan,detail:renderDetail,review:renderReview,settings:renderSettings,pokemon:renderPokemon}[page]||renderHome)();icons();
+    nav.innerHTML=[['home','Übersicht','chart-no-axes-combined'],['album','Pokédex','grid-2x2'],['scan','Scannen','scan-line'],['settings','Optionen','sliders-horizontal']].map(([id,label,glyph])=>`<button type="button" data-action="nav" data-page="${id}" ${id===(['detail','review','pokemon'].includes(page)?'album':['sets','set','top'].includes(page)?'home':page)?'aria-current="page"':''}>${icon(glyph)}<span>${label}</span></button>`).join('');
+    ({home:renderHome,album:renderAlbum,scan:renderScan,detail:renderDetail,review:renderReview,settings:renderSettings,pokemon:renderPokemon,sets:renderSets,set:renderSet,top:renderTop}[page]||renderHome)();icons();
   }
   function cardTile(card,lang=language){const qty=quantity(card.id,lang);return `<button type="button" class="pd-cardtile ${qty?'':'pd-missing'}" data-action="card" data-id="${esc(card.id)}" data-language="${lang}" aria-label="${esc(card.name)}, ${esc(setID(card))}, ${qty?qty+' im Besitz':'fehlt noch'}">${artwork(card,!qty,false,lang)}${qty?`<span class="pd-check">${icon('check')}${qty>1?qty:''}</span>`:''}<span class="pd-cardtitle">${esc(card.name)}</span><span class="pd-tiny pd-muted">${esc(setID(card).toUpperCase())} · #${esc(card.localId)}</span></button>`;}
   function storageCards(){
@@ -3609,6 +3636,101 @@ self.onmessage=async event=>{
     if(JSON.stringify(next.map(c=>[c.pricing,c.variants_detailed]))===before)return;
     try{await mutate(current=>current.map(e=>({...e,card:applyLivePrice(e.card,e.language)})));if(['home','detail','album'].includes(page)&&!scan.busy)render();}catch{}
   }
+  /* ===== Wertverlauf, Top-Karten, Gewinner & Verlierer, Set-Fortschritt, CSV ===== */
+  const today=()=>new Date().toLocaleDateString('sv-SE');
+  const entryKey=e=>e.language+'|'+e.card.id+'|'+e.variantID;
+  async function recordDaily(){
+    if(!ready||!db)return;
+    const d=today(),stats=C.stats(entries),prices={};
+    for(const e of entries){const v=C.cents(e.card,e.variantID);if(v!==null)prices[entryKey(e)]=v;}
+    valueHistory=valueHistory.filter(x=>x.d!==d).concat(entries.length||valueHistory.length?[{d,v:stats.valueCents,n:stats.cards}]:[]).sort((a,b)=>a.d.localeCompare(b.d)).slice(-1100);
+    priceSnapshots=priceSnapshots.filter(x=>x.d!==d).concat([{d,p:prices}]).sort((a,b)=>a.d.localeCompare(b.d)).slice(-60);
+    try{await db.put('settings','valueHistory',valueHistory);await db.put('settings','priceSnapshots',priceSnapshots);}catch{}
+    if(page==='home'&&!scan.busy){const box=document.getElementById('pd-value-chart');if(box)box.outerHTML=valueChart();icons();}
+  }
+  function valueChart(){
+    const days={'1W':7,'1M':31,'3M':92,'1J':366,'Alle':100000}[chartRange]||31,from=new Date(Date.now()-days*864e5).toLocaleDateString('sv-SE');
+    const points=valueHistory.filter(x=>x.d>=from);
+    const chips=`<div class="pd-chartchips">${['1W','1M','3M','1J','Alle'].map(r=>`<button type="button" data-action="chart-range" data-range="${r}" aria-pressed="${chartRange===r}">${r}</button>`).join('')}</div>`;
+    if(points.length<2)return `<div id="pd-value-chart" class="pd-valuechart"><p class="pd-small pd-chartnote">${icon('chart-line')}Der Wertverlauf startet ${valueHistory.length?'am '+new Date(valueHistory[0].d).toLocaleDateString('de-DE'):'heute'}. Ab morgen siehst du hier, wie sich deine Sammlung entwickelt.</p></div>`;
+    const W=300,H=74,values=points.map(p=>p.v),min=Math.min(...values),max=Math.max(...values),span=max-min||1,t0=new Date(points[0].d).getTime(),t1=new Date(points[points.length-1].d).getTime(),tspan=t1-t0||1;
+    const xy=points.map(p=>[((new Date(p.d).getTime()-t0)/tspan)*W,H-4-((p.v-min)/span)*(H-12)]);
+    const line=xy.map(([x,y],i)=>(i?'L':'M')+x.toFixed(1)+' '+y.toFixed(1)).join(' '),area=line+` L${W} ${H} L0 ${H} Z`;
+    const diff=values[values.length-1]-values[0],pct=values[0]?diff/values[0]*100:0,sign=diff>0?'+':diff<0?'−':'±';
+    return `<div id="pd-value-chart" class="pd-valuechart"><div class="pd-row pd-between"><span class="pd-small pd-chartdelta">${sign}${euro(Math.abs(diff))} (${sign}${new Intl.NumberFormat('de-DE',{maximumFractionDigits:1}).format(Math.abs(pct))} %) · ${chartRange==='Alle'?'seit Beginn':'im Zeitraum'}</span></div><svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Wertverlauf der Sammlung"><defs><linearGradient id="pd-area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient></defs><path d="${area}" fill="url(#pd-area)"/><path d="${line}" fill="none" stroke="#fff" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>${chips}</div>`;
+  }
+  // Unique owned cards with value (one row per card + variant + language).
+  function ownedRows(){
+    const map=new Map();
+    for(const e of entries){const key=entryKey(e),row=map.get(key)||{e,qty:0,cents:C.cents(e.card,e.variantID)};row.qty+=e.quantity;map.set(key,row);}
+    return [...map.values()];
+  }
+  function cardRow(r,extra=''){const c=r.e.card;return `<button type="button" class="pd-cardrow" data-action="card" data-id="${esc(c.id)}" data-language="${r.e.language}"><span class="pd-cardrow-art">${artwork(c,false,false,r.e.language)}</span><span class="pd-grow"><strong>${esc(c.name)}</strong><small>${esc(c.set?.name||setID(c))} · #${esc(c.localId)}${r.qty>1?' · '+r.qty+'×':''}</small></span><span class="pd-cardrow-value">${r.cents!==null?euro(r.cents):'–'}${extra}</span></button>`;}
+  function topCards(limit=5){return ownedRows().filter(r=>r.cents!==null&&r.cents>0).sort((a,b)=>b.cents-a.cents).slice(0,limit);}
+  function movers(){
+    const now=today(),weekAgo=new Date(Date.now()-7*864e5).toLocaleDateString('sv-SE'),base=[...priceSnapshots].reverse().find(x=>x.d<=weekAgo);
+    const rows=ownedRows().filter(r=>r.cents!==null&&r.cents>0).map(r=>{
+      let before=null;
+      if(base)before=base.p[entryKey(r.e)]??null;
+      else{const q=C.quote(r.e.card,r.e.variantID),foil=['holo','reverse'].includes(r.e.variantID)&&q?.['avg7-holo']>0&&q?.['avg30-holo']>0;const a7=foil?q['avg7-holo']:q?.avg7,a30=foil?q['avg30-holo']:q?.avg30;if(a7>0&&a30>0)return {...r,change:(a7-a30)/a30*100,diff:Math.round((a7-a30)*100)*r.qty,mode:'trend'};}
+      return before&&before>=20?{...r,change:(r.cents-before)/before*100,diff:(r.cents-before)*r.qty,mode:'week'}:null;
+    }).filter(r=>r&&Math.abs(r.change)>=0.5);
+    return {mode:base?'week':'trend',up:rows.filter(r=>r.change>0).sort((a,b)=>b.change-a.change).slice(0,3),down:rows.filter(r=>r.change<0).sort((a,b)=>a.change-b.change).slice(0,3)};
+  }
+  function moverRow(r){const pct=new Intl.NumberFormat('de-DE',{maximumFractionDigits:1}).format(Math.abs(r.change));return cardRow(r,`<small class="${r.change>0?'pd-up':'pd-down'}">${r.change>0?'▲':'▼'} ${pct} %</small>`);}
+  function moversSection(){
+    if(!entries.length)return '';const m=movers();if(!m.up.length&&!m.down.length)return '';
+    return `<section class="pd-substack"><div class="pd-row pd-between"><h2>Gewinner &amp; Verlierer</h2><span class="pd-tiny pd-muted">${m.mode==='week'?'seit letzter Woche':'7- vs. 30-Tage-Ø'}</span></div>${m.up.length?`<div class="pd-list">${m.up.map(moverRow).join('')}</div>`:''}${m.down.length?`<div class="pd-list">${m.down.map(moverRow).join('')}</div>`:''}${m.mode==='trend'?'<p class="pd-tiny pd-muted">Bis genug eigener Verlauf da ist (7 Tage), zeigt die App die Cardmarket-Tendenz: Durchschnitt der letzten 7 gegenüber 30 Tagen.</p>':''}</section>`;
+  }
+  function topSection(){const top=topCards(5);return top.length?`<section class="pd-substack"><div class="pd-row pd-between"><h2>Top-Karten</h2><button type="button" class="pd-link" data-action="open-top">Alle ansehen</button></div><div class="pd-list">${top.map((r,i)=>cardRow(r,`<small class="pd-muted">#${i+1}</small>`)).join('')}</div></section>`:'';}
+  function renderTop(){
+    const rows=ownedRows().sort((a,b)=>(b.cents??-1)-(a.cents??-1));
+    content.innerHTML=`<div class="pd-stack"><button class="pd-back" data-action="nav" data-page="home">${icon('chevron-left')}Übersicht</button><div class="pd-substack"><h1>Top-Karten</h1><p class="pd-muted">Deine Karten nach Preis pro Karte.</p></div><div class="pd-list">${rows.map((r,i)=>cardRow(r,r.cents!==null?`<small class="pd-muted">#${i+1}${r.qty>1?' · '+euro(r.cents*r.qty):''}</small>`:'')).join('')||'<div class="pd-empty">Noch keine Karten im Album.</div>'}</div></div>`;
+  }
+  // Set progress: grouped by card language and set; numbers above the official count are secret rares.
+  function setGroups(){
+    const groups=new Map();
+    for(const e of entries){const id=setID(e.card),key=e.language+'|'+id;if(!groups.has(key))groups.set(key,{lang:e.language,id,name:e.card.set?.name||id,owned:new Set(),secret:new Set()});const g=groups.get(key),info=setIndexes[e.language]?.[id],official=Number(info?.official||e.card.set?.cardCount?.official)||0,n=parseInt(e.card.localId,10);(official&&n>official?g.secret:g.owned).add(e.card.localId);}
+    return [...groups.values()].map(g=>{const info=setIndexes[g.lang]?.[g.id],official=Number(info?.official)||(catalogues[g.lang]||[]).filter(c=>setID(c)===g.id).length;return {...g,name:info?.name||g.name,official,count:g.owned.size,percent:official?Math.min(100,g.owned.size/official*100):0};}).sort((a,b)=>b.percent-a.percent||b.count-a.count);
+  }
+  function setRow(g){return `<button type="button" class="pd-setrow" data-action="open-set" data-set="${esc(g.id)}" data-language="${g.lang}"><span class="pd-grow"><strong>${esc(g.name)}</strong><small>${g.count} von ${g.official}${g.secret.size?' · +'+g.secret.size+' Secret':''} · ${languageNames[g.lang]}</small><span class="pd-setbar"><span style="width:${g.percent.toFixed(1)}%"></span></span></span><span class="pd-setpct pd-numbers">${new Intl.NumberFormat('de-DE',{maximumFractionDigits:0}).format(g.percent)} %</span></button>`;}
+  function setsSection(){const groups=setGroups();return groups.length?`<section class="pd-substack"><div class="pd-row pd-between"><h2>Deine Sets</h2><button type="button" class="pd-link" data-action="open-sets">Alle ${groups.length}</button></div><div class="pd-list">${groups.slice(0,3).map(setRow).join('')}</div></section>`:'';}
+  function renderSets(){
+    const groups=setGroups();
+    content.innerHTML=`<div class="pd-stack"><button class="pd-back" data-action="nav" data-page="home">${icon('chevron-left')}Übersicht</button><div class="pd-substack"><h1>Set-Fortschritt</h1><p class="pd-muted">Wie viele Karten jedes Sets du schon hast.</p></div><div class="pd-list">${groups.map(setRow).join('')||'<div class="pd-empty">Noch keine Karten im Album.</div>'}</div></div>`;
+  }
+  async function renderSet(){
+    const sel=selectedSet;if(!sel){renderSets();return;}
+    const info=setIndexes[sel.lang]?.[sel.id],official=Number(info?.official)||0;
+    const cards=(catalogues[sel.lang]||[]).filter(c=>setID(c)===sel.id).map(c=>({...c,set:{id:sel.id,name:info?.name,cardCount:{official}}})).sort((a,b)=>(parseInt(a.localId,10)||1e9)-(parseInt(b.localId,10)||1e9)||String(a.localId).localeCompare(String(b.localId)));
+    const owned=new Set(entries.filter(e=>e.language===sel.lang&&setID(e.card)===sel.id).map(e=>e.card.localId));
+    const shown=cards.filter(c=>setFilter==='all'||(setFilter==='owned'?owned.has(c.localId):!owned.has(c.localId)));
+    const g=setGroups().find(x=>x.lang===sel.lang&&x.id===sel.id);
+    content.innerHTML=`<div class="pd-stack"><button class="pd-back" data-action="open-sets">${icon('chevron-left')}Alle Sets</button><div class="pd-substack"><h1>${esc(info?.name||sel.id)}</h1><p class="pd-muted">${g?g.count:0} von ${official||cards.length}${g?.secret.size?' · +'+g.secret.size+' Secret':''} · ${languageNames[sel.lang]}</p></div>${g?`<span class="pd-setbar pd-setbar-lg"><span style="width:${g.percent.toFixed(1)}%"></span></span>`:''}<div class="pd-segment">${[['all','Alle'],['missing','Fehlend'],['owned','Im Besitz']].map(([v,l])=>`<button type="button" data-action="set-filter" data-value="${v}" aria-pressed="${setFilter===v}">${l}</button>`).join('')}</div><p id="pd-set-missing" class="pd-small pd-muted">Preise werden geladen …</p><div class="pd-cardgrid">${shown.map(c=>`<div class="pd-settile">${cardTile(c,sel.lang)}<span class="pd-tileprice pd-numbers" data-price="${esc(c.localId)}">…</span></div>`).join('')||'<div class="pd-empty">Keine Karten in dieser Auswahl.</div>'}</div></div>`;
+    icons();
+    // Prices for every card of the set (also the missing ones) from the daily Cardmarket list.
+    try{
+      if(!priceMeta)await loadPriceMeta();await preparePrices(cards.map(card=>({card,lang:sel.lang})));
+      if(page!=='set'||selectedSet!==sel)return;
+      let missingTotal=0,missingPriced=0,missingCount=0;
+      for(const c of cards){
+        const priced=applyLivePrice(c,sel.lang),value=C.cents(priced,'normal')??C.cents(priced,'holo');
+        if(!owned.has(c.localId)){missingCount++;if(value!==null){missingTotal+=value;missingPriced++;}}
+        const el=content.querySelector(`[data-price="${CSS.escape(c.localId)}"]`);if(el)el.textContent=value!==null?euro(value):'–';
+      }
+      const note=document.getElementById('pd-set-missing');if(note)note.textContent=missingCount?`Fehlend: ${missingCount} Karten · zusammen ca. ${euro(missingTotal)}${missingPriced<missingCount?' ('+(missingCount-missingPriced)+' ohne Preis)':''}`:'Set komplett!';
+    }catch{const note=document.getElementById('pd-set-missing');if(note)note.textContent='Preise sind gerade nicht erreichbar.';content.querySelectorAll('[data-price]').forEach(el=>el.textContent='');}
+  }
+  async function exportCSV(){
+    const cell=v=>{const t=String(v??'');return /[;"\n\r]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t;},num=c=>c===null?'':(c/100).toFixed(2).replace('.',',');
+    const head=['Name','Set','Nummer','Sprache','Variante','Zustand','Anzahl','Preis pro Karte (EUR)','Gesamt (EUR)','Preisstand','Notiz','Hinzugefügt'];
+    const rows=entries.slice().sort((a,b)=>(C.cents(b.card,b.variantID)??-1)-(C.cents(a.card,a.variantID)??-1)).map(e=>{const c=C.cents(e.card,e.variantID),q=C.quote(e.card,e.variantID);return [e.card.name,e.card.set?.name||setID(e.card),e.card.localId,languageNames[e.language],options(e.card).find(v=>v.id===e.variantID)?.title||e.variantID,e.condition,e.quantity,num(c),num(c===null?null:c*e.quantity),q?.updated?new Date(q.updated).toLocaleDateString('de-DE'):'',e.notes,new Date(e.addedAt).toLocaleDateString('de-DE')];});
+    const stats=C.stats(entries);rows.push([],['Summe','','','','','',stats.cards,'',num(stats.valueCents)]);
+    const csv='﻿'+[head,...rows].map(r=>r.map(cell).join(';')).join('\r\n'),name='PocketDeck-Sammlung-'+today()+'.csv',blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+    const file=typeof File==='function'?new File([blob],name,{type:'text/csv'}):null;
+    if(file&&navigator.canShare?.({files:[file]})){try{await navigator.share({files:[file],title:'PocketDeck-Sammlung'});return;}catch(e){if(e.name==='AbortError')return;}}
+    const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);
+  }
   function dexCard(){
     const owned=C.stats(entries).species,total=species.length,found=species.filter(s=>owned.has(s.id)).length,percent=total?found/total*100:0,label=new Intl.NumberFormat('de-DE',{maximumFractionDigits:1}).format(percent)+' %';
     return `<button type="button" class="pd-dexcard" data-action="open-pokedex" aria-label="Pokédex öffnen: ${found} von ${total} Pokémon, ${label}"><span class="pd-ring" style="--p:${Math.max(percent,found?1.5:0)}"><span class="pd-numbers">${label}</span></span><span class="pd-grow"><strong>Dein Pokédex</strong><small class="pd-numbers">${found.toLocaleString('de-DE')} von ${total.toLocaleString('de-DE')} Pokémon</small><small>${(total-found).toLocaleString('de-DE')} fehlen noch</small></span>${icon('chevron-right')}</button>`;
@@ -3616,9 +3738,12 @@ self.onmessage=async event=>{
   function renderHome(){
     const stats=C.stats(entries),recent=Array.from(new Map(entries.slice().sort((a,b)=>b.addedAt-a.addedAt).map(e=>[ref(e.language,e.card.id),e])).values()).slice(0,3);
     content.innerHTML=`<div class="pd-stack">
-      <section class="pd-surface pd-hero-value"><div class="pd-row pd-between"><span class="pd-muted pd-small">${stats.unpriced?'Bekannter Teilwert':'Sammlungswert'}</span><button type="button" class="pd-iconbutton" data-action="refresh-prices" aria-label="Preise aktualisieren" ${refreshing||!entries.length?'disabled':''}>${icon('refresh-cw')}</button></div><div class="pd-value pd-numbers" data-testid="total-value">${euro(stats.valueCents)}</div><div class="pd-metrics"><div><strong data-testid="total-count">${stats.cards}</strong><span class="pd-small pd-muted">Karten gesamt</span></div><div><strong>${stats.references.size}</strong><span class="pd-small pd-muted">Verschiedene Karten</span></div></div><div class="pd-footnote">${stats.unpriced?stats.unpriced+' Karten ohne Preis · nicht im Wert enthalten':'Cardmarket-Richtwerte in EUR'}</div>${refreshing?'<p id="pd-price-progress" class="pd-small pd-muted">Preise werden aktualisiert …</p>':''}</section>
+      <section class="pd-surface pd-hero-value"><div class="pd-row pd-between"><span class="pd-muted pd-small">${stats.unpriced?'Bekannter Teilwert':'Sammlungswert'}</span><button type="button" class="pd-iconbutton" data-action="refresh-prices" aria-label="Preise aktualisieren" ${refreshing||!entries.length?'disabled':''}>${icon('refresh-cw')}</button></div><div class="pd-value pd-numbers" data-testid="total-value">${euro(stats.valueCents)}</div><div class="pd-metrics"><div><strong data-testid="total-count">${stats.cards}</strong><span class="pd-small pd-muted">Karten gesamt</span></div><div><strong>${stats.references.size}</strong><span class="pd-small pd-muted">Verschiedene Karten</span></div></div>${valueChart()}<div class="pd-footnote">${stats.unpriced?stats.unpriced+' Karten ohne Preis · nicht im Wert enthalten':'Cardmarket-Richtwerte in EUR'}</div>${refreshing?'<p id="pd-price-progress" class="pd-small pd-muted">Preise werden aktualisiert …</p>':''}</section>
       ${dexCard()}
       ${storageCards()}
+      ${moversSection()}
+      ${topSection()}
+      ${setsSection()}
       ${recent.length?`<section class="pd-substack"><div class="pd-row pd-between"><h2>Frisch im Album</h2><button type="button" class="pd-link" data-action="album-cards">Alle ansehen</button></div><div class="pd-cardgrid">${recent.map(e=>cardTile(e.card,e.language)).join('')}</div></section>`:'<section class="pd-surface pd-substack"><h2>Deine erste Karte wartet.</h2><p class="pd-muted pd-small">Scanne eine einzelne Karte oder suche sie im Album. Deine Sammlung bleibt auf diesem Gerät.</p></section>'}
     </div>`;
   }
@@ -3942,7 +4067,7 @@ self.onmessage=async event=>{
     finally{mutationBusy=false;if(page==='review')render();}
   }
   function renderSettings(){
-    content.innerHTML=`<div class="pd-stack"><h1>Ganz nach dir.</h1><span class="pd-tag" style="align-self:flex-start">Version 4.6.5 · Speichern ohne Häkchen</span><section class="pd-surface"><h2>Dein iPhone-Album</h2><p class="pd-small pd-muted" style="margin-top:9px">In Safari: Teilen → Zum Home-Bildschirm → als Web-App öffnen. Starte danach das neue Symbol, bevor du deine Sammlung anlegst.</p><p class="pd-small pd-muted" style="margin-top:9px">Safari und die Home-Bildschirm-App können getrennte Speicher verwenden. Für einen Wechsel vorher eine Sicherung exportieren.</p></section><section class="pd-surface pd-substack"><h2>Erscheinungsbild</h2><div class="pd-segment">${[['system','System'],['light','Hell'],['dark','Dunkel']].map(([value,label])=>`<button data-action="theme" data-value="${value}" aria-pressed="${theme===value}">${label}</button>`).join('')}</div><label class="pd-field">Kartensprache${languagePicker()}</label></section><section class="pd-surface pd-substack"><h2>Lokale Text-KI</h2><label class="pd-setting"><span>Kleine Schrift mit Textmodell lesen</span><input id="pd-text-settings" type="checkbox" ${textEnabled?'checked':''}></label><p class="pd-small pd-muted">PaddleOCR liest Namen, KP und Nummer auf deinem Gerät. Vier Modelle mit zusammen ca. 36,6 MB plus Laufzeitdateien. Deutsch, Englisch, Japanisch und Koreanisch werden automatisch geprüft. Keine Foto-Uploads. Bei Bedarf fällt die Analyse auf Tesseract zurück.</p></section><section class="pd-surface pd-substack"><h2>Lokale Bild-KI</h2><label class="pd-setting"><span>Illustration zusätzlich vergleichen</span><input id="pd-neural-settings" type="checkbox" ${neuralEnabled?'checked':''}></label><p class="pd-small pd-muted">DINOv2 vergleicht Bildmerkmale auf deinem Gerät. Der erste Download benötigt ca. 25 MB für das Modell und zusätzliche Laufzeitdateien. Bilder werden nicht hochgeladen. Kein Ersatz für Nummer und Set; keine Zustandsbewertung.</p></section><section class="pd-surface"><h2>Marktpreise</h2><label class="pd-setting"><span>Automatisch aktualisieren</span><input id="pd-auto-refresh" type="checkbox" ${autoRefresh?'checked':''}></label><button class="pd-secondary" data-action="refresh-prices" ${refreshing||!entries.length?'disabled':''}>${icon('refresh-cw')}Preise jetzt abfragen</button><p id="pd-price-progress" class="pd-small pd-muted" style="margin-top:10px">${refreshing?'Preise werden abgefragt …':'Beim Öffnen und während der Nutzung nach frühestens sechs Stunden. Keine Abfragen bei geschlossener App.'}</p></section><section class="pd-surface pd-substack"><h2>Deine Daten</h2><p class="pd-small pd-muted">Sammlung lokal im Browserspeicher. Keine gespeicherten Aufnahmen, keine Foto-Uploads und keine automatische Cloud-Synchronisierung.</p><button class="pd-secondary" data-action="export" ${!ready?'disabled':''}>${icon('download')}Sicherung exportieren</button><label class="pd-upload">${icon('upload')}Sicherung wiederherstellen<input id="pd-import" type="file" accept="application/json,.json" aria-label="Sicherung importieren"></label><p class="pd-small pd-muted">Speicher: ${persisted?'beständig zugesichert':'nicht dauerhaft zugesichert'} · Sicherheitskopie auf dem Gerät aktiv · ${lastBackupAt?'letzte Sicherung '+new Date(lastBackupAt).toLocaleDateString('de-DE'):'noch keine Sicherung'}</p><p class="pd-small pd-muted">Browserdaten können gelöscht werden, etwa beim Aufräumen des Gerätes. Sichere deine Sammlung regelmäßig in „Dateien“ oder iCloud Drive.</p><button class="pd-secondary" data-action="persistent-storage">Beständigen Speicher anfragen</button></section><section class="pd-surface pd-substack"><h2>Katalog & Quellen</h2><p class="pd-small pd-muted">${currentCatalog().length.toLocaleString('de-DE')} Karten · ${languageNames[language]}<br>${species.length.toLocaleString('de-DE')} Pokémon</p><button class="pd-secondary" data-action="refresh-catalog">Kartenkatalog aktualisieren</button><a href="https://www.paddleocr.ai/latest/en/version3.x/inference_deployment/cross_platform/browser.html" target="_blank" rel="noopener">PaddleOCR · lokale Text-KI</a><a href="./LIZENZ-PADDLEOCR.txt" target="_blank" rel="noopener">PaddleOCR-Lizenz</a><a href="https://tcgdex.dev" target="_blank" rel="noopener">TCGdex · Karten und Preise</a><a href="https://github.com/naptha/tesseract.js" target="_blank" rel="noopener">Tesseract.js · lokale Texterkennung</a><p class="pd-small pd-muted">Kartendaten, einzelne Varianten und Preise können beim Anbieter fehlen. Pokémon-Namen und Abbildungen gehören ihren jeweiligen Rechteinhabern.</p></section></div>`;
+    content.innerHTML=`<div class="pd-stack"><h1>Ganz nach dir.</h1><span class="pd-tag" style="align-self:flex-start">Version 4.7.0 · Wertverlauf, Top-Karten & Sets</span><section class="pd-surface"><h2>Dein iPhone-Album</h2><p class="pd-small pd-muted" style="margin-top:9px">In Safari: Teilen → Zum Home-Bildschirm → als Web-App öffnen. Starte danach das neue Symbol, bevor du deine Sammlung anlegst.</p><p class="pd-small pd-muted" style="margin-top:9px">Safari und die Home-Bildschirm-App können getrennte Speicher verwenden. Für einen Wechsel vorher eine Sicherung exportieren.</p></section><section class="pd-surface pd-substack"><h2>Erscheinungsbild</h2><div class="pd-segment">${[['system','System'],['light','Hell'],['dark','Dunkel']].map(([value,label])=>`<button data-action="theme" data-value="${value}" aria-pressed="${theme===value}">${label}</button>`).join('')}</div><label class="pd-field">Kartensprache${languagePicker()}</label></section><section class="pd-surface pd-substack"><h2>Lokale Text-KI</h2><label class="pd-setting"><span>Kleine Schrift mit Textmodell lesen</span><input id="pd-text-settings" type="checkbox" ${textEnabled?'checked':''}></label><p class="pd-small pd-muted">PaddleOCR liest Namen, KP und Nummer auf deinem Gerät. Vier Modelle mit zusammen ca. 36,6 MB plus Laufzeitdateien. Deutsch, Englisch, Japanisch und Koreanisch werden automatisch geprüft. Keine Foto-Uploads. Bei Bedarf fällt die Analyse auf Tesseract zurück.</p></section><section class="pd-surface pd-substack"><h2>Lokale Bild-KI</h2><label class="pd-setting"><span>Illustration zusätzlich vergleichen</span><input id="pd-neural-settings" type="checkbox" ${neuralEnabled?'checked':''}></label><p class="pd-small pd-muted">DINOv2 vergleicht Bildmerkmale auf deinem Gerät. Der erste Download benötigt ca. 25 MB für das Modell und zusätzliche Laufzeitdateien. Bilder werden nicht hochgeladen. Kein Ersatz für Nummer und Set; keine Zustandsbewertung.</p></section><section class="pd-surface"><h2>Marktpreise</h2><label class="pd-setting"><span>Automatisch aktualisieren</span><input id="pd-auto-refresh" type="checkbox" ${autoRefresh?'checked':''}></label><button class="pd-secondary" data-action="refresh-prices" ${refreshing||!entries.length?'disabled':''}>${icon('refresh-cw')}Preise jetzt abfragen</button><p id="pd-price-progress" class="pd-small pd-muted" style="margin-top:10px">${refreshing?'Preise werden abgefragt …':'Beim Öffnen und während der Nutzung nach frühestens sechs Stunden. Keine Abfragen bei geschlossener App.'}</p></section><section class="pd-surface pd-substack"><h2>Deine Daten</h2><p class="pd-small pd-muted">Sammlung lokal im Browserspeicher. Keine gespeicherten Aufnahmen, keine Foto-Uploads und keine automatische Cloud-Synchronisierung.</p><button class="pd-secondary" data-action="export" ${!ready?'disabled':''}>${icon('download')}Sicherung exportieren</button><button class="pd-secondary" data-action="export-csv" ${!ready||!entries.length?'disabled':''}>${icon('file-spreadsheet')}Als Tabelle exportieren (CSV, Excel)</button><label class="pd-upload">${icon('upload')}Sicherung wiederherstellen<input id="pd-import" type="file" accept="application/json,.json" aria-label="Sicherung importieren"></label><p class="pd-small pd-muted">Speicher: ${persisted?'beständig zugesichert':'nicht dauerhaft zugesichert'} · Sicherheitskopie auf dem Gerät aktiv · ${lastBackupAt?'letzte Sicherung '+new Date(lastBackupAt).toLocaleDateString('de-DE'):'noch keine Sicherung'}</p><p class="pd-small pd-muted">Browserdaten können gelöscht werden, etwa beim Aufräumen des Gerätes. Sichere deine Sammlung regelmäßig in „Dateien“ oder iCloud Drive.</p><button class="pd-secondary" data-action="persistent-storage">Beständigen Speicher anfragen</button></section><section class="pd-surface pd-substack"><h2>Katalog & Quellen</h2><p class="pd-small pd-muted">${currentCatalog().length.toLocaleString('de-DE')} Karten · ${languageNames[language]}<br>${species.length.toLocaleString('de-DE')} Pokémon</p><button class="pd-secondary" data-action="refresh-catalog">Kartenkatalog aktualisieren</button><a href="https://www.paddleocr.ai/latest/en/version3.x/inference_deployment/cross_platform/browser.html" target="_blank" rel="noopener">PaddleOCR · lokale Text-KI</a><a href="./LIZENZ-PADDLEOCR.txt" target="_blank" rel="noopener">PaddleOCR-Lizenz</a><a href="https://tcgdex.dev" target="_blank" rel="noopener">TCGdex · Karten und Preise</a><a href="https://github.com/naptha/tesseract.js" target="_blank" rel="noopener">Tesseract.js · lokale Texterkennung</a><p class="pd-small pd-muted">Kartendaten, einzelne Varianten und Preise können beim Anbieter fehlen. Pokémon-Namen und Abbildungen gehören ihren jeweiligen Rechteinhabern.</p></section></div>`;
   }
   async function markBackup(){lastBackupAt=Date.now();try{await db.put('settings','lastBackupAt',lastBackupAt);}catch{}if(page==='home')render();}
   async function exportBackup(){
@@ -3988,6 +4113,12 @@ self.onmessage=async event=>{
       if(action==='refresh-prices'){await refreshPrices(true);return;}
       if(action==='theme'){theme=button.dataset.value;await db.put('settings','theme',theme);render();return;}
       if(action==='export'){await exportBackup();return;}
+      if(action==='export-csv'){await exportCSV();return;}
+      if(action==='chart-range'){chartRange=button.dataset.range;const box=document.getElementById('pd-value-chart');if(box){box.outerHTML=valueChart();icons();}return;}
+      if(action==='open-top'){go('top');return;}
+      if(action==='open-sets'){go('sets');return;}
+      if(action==='open-set'){selectedSet={id:button.dataset.set,lang:button.dataset.language};setFilter='all';go('set');return;}
+      if(action==='set-filter'){setFilter=button.dataset.value;renderSet();return;}
       if(action==='persistent-storage'){const persisted=await navigator.storage?.persist?.();notice(persisted?'Der Browser hat beständigen Speicher gewährt. Sicherungen bleiben sinnvoll.':'Der Browser hat keine Beständigkeit zugesichert. Bitte regelmäßig Sicherungen exportieren.');return;}
       if(action==='refresh-catalog'){if(language==='ko'){notice('Koreanische Scans verwenden den japanischen Referenzkatalog. Es werden keine japanischen Preise als KR-Preise übernommen.');return;}button.disabled=true;button.textContent='Katalog wird geladen …';const cards=await fetchJSON(`https://api.tcgdex.net/v2/${language}/cards`);if(!Array.isArray(cards)||!cards.length)throw Error('Ungültiger Katalog.');catalogues[language]=cards.filter(c=>!String(c.image||'').includes('/tcgp/')).map(c=>({...c,localId:String(c.localId)}));await db.put('cache','catalog:'+language,catalogues[language]);const expansions=await fetchJSON(`https://api.tcgdex.net/v2/${language}/sets`);setIndexes[language]=Object.fromEntries(expansions.map(s=>[s.id,{name:s.name,official:s.cardCount?.official,total:s.cardCount?.total}]));await db.put('cache','sets:'+language,setIndexes[language]);render();notice('Kartenkatalog und Set-Nummern aktualisiert.');return;}
     }catch(e){notice(e.message,'error');if(action==='capture'&&e.keepCamera){startLive();}else if(action==='capture'){stopCamera();scan.busy=false;scan.done=true;scan.error=e.message;render();setTimeout(()=>document.getElementById('pd-scan-result')?.scrollIntoView?.({block:'start',behavior:'smooth'}),0);}else if(action==='refresh-catalog')render();}
@@ -4023,8 +4154,8 @@ self.onmessage=async event=>{
       try{await catalogReady;}catch(e){notice(e.message+' Scannen und Suche sind erst nach einem Neuladen mit Internet möglich.','error');}
       db=await new PocketDeckStorage().open();const saved=await db.read('collection','state');if(saved){if(saved.schemaVersion!==1)throw Error('Unbekannte Sammlungsversion.');entries=C.validEntries(saved.entries).map(safeEntry);}
       if(!entries.length){const mirror=await readMirror();if(mirror){entries=mirror;await db.commit(entries);notice(`Deine Sammlung (${entries.length} Einträge) wurde aus der Sicherheitskopie auf diesem Gerät wiederhergestellt.`);}}
-      lastBackupAt=Number(await db.read('settings','lastBackupAt'))||0;
-      setTimeout(prefetchArt,1200);setTimeout(refreshLivePrices,300);persisted=await navigator.storage?.persisted?.().catch(()=>false)||false;if(!persisted&&entries.length)persisted=await navigator.storage?.persist?.().catch(()=>false)||false;
+      lastBackupAt=Number(await db.read('settings','lastBackupAt'))||0;try{valueHistory=(await db.read('settings','valueHistory'))||[];priceSnapshots=(await db.read('settings','priceSnapshots'))||[];}catch{}
+      setTimeout(prefetchArt,1200);setTimeout(()=>refreshLivePrices().catch(()=>{}).finally(recordDaily),300);persisted=await navigator.storage?.persisted?.().catch(()=>false)||false;if(!persisted&&entries.length)persisted=await navigator.storage?.persist?.().catch(()=>false)||false;
       language=await db.read('settings','language')||'de';if(!C.languages.includes(language))language='de';theme=await db.read('settings','theme')||'dark';textEnabled=(await db.read('settings','textEnabled'))!==false;autoRefresh=(await db.read('settings','autoRefresh'))!==false;neuralEnabled=(await db.read('settings','neuralEnabled'))!==false;autoCapture=(await db.read('settings','autoCapture'))!==false;
       for(const lang of C.languages){const cached=await db.read('cache','catalog:'+lang);if(Array.isArray(cached)&&cached.length)catalogues[lang]=cached;const cachedSets=await db.read('cache','sets:'+lang);if(cachedSets&&typeof cachedSets==='object')setIndexes[lang]=cachedSets;}
       ready=true;render();if(autoRefresh)refreshPrices();
