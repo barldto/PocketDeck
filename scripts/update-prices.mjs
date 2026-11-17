@@ -23,6 +23,7 @@ const products=rows(productData),guides=rows(guideData);
 if(products.length<1000||guides.length<1000)throw new Error(`Unexpectedly small files: ${products.length} products, ${guides.length} price rows`);
 const updated=guideData.createdAt||productData.createdAt||new Date().toISOString();
 
+if(process.env.PD_DEBUG){const want=new Set([6037,5996,6092,3851,6189,5519,5782]);await writeFile('debug-names.json',JSON.stringify(products.filter(p=>want.has(p.idExpansion)).map(p=>[p.idExpansion,p.idProduct,p.name])));}
 /* ---------- 2. Price shards ---------- */
 // Row per product: [trend, avg, low, avg7, avg30, trendHolo, avgHolo, lowHolo] in cents (0 = no value).
 const shards=Array.from({length:SHARDS},()=>({}));let priced=0;

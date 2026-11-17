@@ -28,11 +28,11 @@ jobs:
           node-version: 22
       - name: Preisliste und Zuordnung erstellen
         run: node scripts/update-prices.mjs
+        env:
+          PD_DEBUG: '1'
       - name: Änderungen speichern
         run: |
-          git add -A prices cm-map
-          git rm -q --cached --ignore-unmatch prices.json debug-names.json
-          rm -f prices.json debug-names.json
+          git add -A prices cm-map debug-names.json
           if git diff --cached --quiet; then
             echo "Keine neuen Preise."
             exit 0
