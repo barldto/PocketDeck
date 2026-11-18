@@ -1,30 +1,30 @@
 {
  "updated": "2026-11-17T02:51:10+0100",
  "checked": 500,
- "agree": 456,
- "corrected": 7,
- "noPrice": 34,
- "tcgdexMissing": 37,
+ "agree": 450,
+ "corrected": 4,
+ "noPrice": 35,
+ "tcgdexMissing": 46,
  "byLang": {
   "en": {
    "checked": 250,
-   "agree": 239,
-   "corrected": 6,
-   "noPrice": 2,
-   "tcgdexMissing": 5
+   "agree": 237,
+   "corrected": 4,
+   "noPrice": 6,
+   "tcgdexMissing": 9
   },
   "ja": {
    "checked": 250,
-   "agree": 217,
-   "corrected": 1,
-   "noPrice": 32,
-   "tcgdexMissing": 32
+   "agree": 213,
+   "corrected": 0,
+   "noPrice": 29,
+   "tcgdexMissing": 37
   }
  },
  "examples": [
   {
-   "card": "en:xy11-43",
-   "name": "Nidoran♂",
+   "card": "en:bwp-BW19",
+   "name": "Zoroark",
    "rarity": "Common",
    "tcgdex": [
     0,
@@ -33,20 +33,166 @@
     0
    ],
    "final": [
-    291536,
-    "Nidoran ♂ [Come Along | Peck]",
-    1716,
-    0.13
+    0,
+    null,
+    null,
+    0
    ],
-   "setExpansion": 1716,
+   "setExpansion": 1611,
    "entry": [
-    291536,
-    291536
+    0,
+    279917,
+    279928,
+    363651
    ]
   },
   {
-   "card": "en:xyp-XY174",
-   "name": "Pikachu-EX",
+   "card": "en:np-29",
+   "name": "Celebi",
+   "rarity": "Common",
+   "tcgdex": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "final": [
+    275502,
+    "Celebi [Leaf Slice]",
+    1608,
+    52.96
+   ],
+   "setExpansion": 1608,
+   "entry": [
+    275502,
+    275502
+   ]
+  },
+  {
+   "card": "en:bwp-BW42",
+   "name": "Tornadus",
+   "rarity": "Rare",
+   "tcgdex": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "final": [
+    279910,
+    "Tornadus [Energy Wheel | Hurricane]",
+    1611,
+    4.48
+   ],
+   "setExpansion": 1611,
+   "entry": [
+    279910,
+    279910
+   ]
+  },
+  {
+   "card": "en:xy4-24a",
+   "name": "M Manectric EX",
+   "rarity": "Rare",
+   "tcgdex": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "final": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "setExpansion": 1521
+  },
+  {
+   "card": "en:me06-090",
+   "name": "Adventure Lantern",
+   "rarity": "Uncommon",
+   "tcgdex": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "final": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "setExpansion": 6704
+  },
+  {
+   "card": "en:dp6-78",
+   "name": "Unown U",
+   "rarity": "Uncommon",
+   "tcgdex": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "final": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "setExpansion": 1560
+  },
+  {
+   "card": "en:xyp-XY85",
+   "name": "Hoopa EX",
+   "rarity": "Promo",
+   "tcgdex": [
+    553491,
+    "Hoopa [Appearance Rush]",
+    4159,
+    64.59
+   ],
+   "final": [
+    289810,
+    "Hoopa EX [Hyperspace Ring | Wonder Trick]",
+    1612,
+    13.02
+   ],
+   "setExpansion": 1612,
+   "entry": [
+    289810,
+    289790,
+    289810
+   ]
+  },
+  {
+   "card": "en:tk-bw-e-1",
+   "name": "Lillipup",
+   "rarity": "None",
+   "tcgdex": [
+    280093,
+    "Purrloin [Scratch | Slash]",
+    1630,
+    0.59
+   ],
+   "final": [
+    280121,
+    "Lillipup [Pickup | Bite]",
+    1630,
+    0.09
+   ],
+   "setExpansion": 1630,
+   "entry": [
+    280121,
+    280121,
+    280123
+   ]
+  },
+  {
+   "card": "en:xyp-XY175",
+   "name": "Magearna-EX",
    "rarity": "Promo",
    "tcgdex": [
     0,
@@ -55,139 +201,61 @@
     0
    ],
    "final": [
-    0,
-    null,
-    null,
-    0
+    295166,
+    "Magearna EX [Mystic Heart | Soul Blaster]",
+    1612,
+    1.13
    ],
    "setExpansion": 1612,
    "entry": [
-    0,
-    289809,
-    293003,
-    295165,
-    363899,
-    363931
+    295166,
+    295166
    ]
   },
   {
-   "card": "en:xy1-144",
-   "name": "Yveltal EX",
+   "card": "en:xy10-121",
+   "name": "M Altaria EX",
    "rarity": "Ultra Rare",
    "tcgdex": [
-    281415,
-    "Yveltal [Oblivion Wing | Darkness Blade]",
-    1582,
-    0.98
-   ],
-   "final": [
-    281481,
-    "Yveltal EX [Evil Ball | Y Cyclone]",
-    1582,
-    42.36
-   ],
-   "setExpansion": 1582,
-   "entry": [
-    281481,
-    281416,
-    281481
-   ]
-  },
-  {
-   "card": "en:xy7-67",
-   "name": "Porygon-Z",
-   "rarity": "Rare",
-   "tcgdex": [
-    284245,
-    "Porygon [Data Check | Sharpen]",
-    1660,
-    0.02
-   ],
-   "final": [
-    284248,
-    "Porygon-Z [Digital Reboot | Dazzle Blast]",
-    1660,
-    4.6
-   ],
-   "setExpansion": 1660,
-   "entry": [
-    284248,
-    284247,
-    284248
-   ]
-  },
-  {
-   "card": "en:gym2-80",
-   "name": "Koga's Pidgey",
-   "rarity": "Common",
-   "tcgdex": [
-    274287,
-    "Koga",
-    1530,
-    49.39
-   ],
-   "final": [
-    274348,
-    "Koga's Pidgey [Peck | Sand-attack]",
-    1530,
-    1.45
-   ],
-   "setExpansion": 1530,
-   "entry": [
-    274348,
-    274317,
-    274348
-   ]
-  },
-  {
-   "card": "en:sm8-59",
-   "name": "Suicune",
-   "rarity": "Rare",
-   "tcgdex": [
-    364940,
-    "Suicune GX [Phantom Winds | Cure Stream | Brinicle GX]",
-    2370,
-    6.55
-   ],
-   "final": [
-    365698,
-    "Suicune [Frozen Flow | Aurora Gain]",
-    2370,
-    7.66
-   ],
-   "setExpansion": 2370,
-   "entry": [
-    365698,
-    365698
-   ]
-  },
-  {
-   "card": "en:tk-xy-p-1",
-   "name": "Glameow",
-   "rarity": "Common",
-   "tcgdex": [
     0,
     null,
     null,
     0
    ],
    "final": [
-    290265,
-    "Glameow [Act Cute | Scratch]",
-    1707,
-    0.26
+    0,
+    null,
+    null,
+    0
    ],
-   "setExpansion": 1707,
+   "setExpansion": 1706
+  },
+  {
+   "card": "en:xyp-XY130",
+   "name": "Tyranitar",
+   "rarity": "Promo",
+   "tcgdex": [
+    554153,
+    "Tyranitar [Raging Roar | Dark Mountain]",
+    4159,
+    7.43
+   ],
+   "final": [
+    290103,
+    "Tyranitar [Raging Roar | Dark Mountain]",
+    1612,
+    63.03
+   ],
+   "setExpansion": 1612,
    "entry": [
-    290265,
-    290265,
-    290290
+    290103,
+    290103
    ]
   },
   {
-   "card": "en:xy3-112",
-   "name": "M Heracross EX",
-   "rarity": "Secret Rare",
+   "card": "en:xy5-106",
+   "name": "M Gardevoir EX",
+   "rarity": "Ultra Rare",
    "tcgdex": [
     0,
     null,
@@ -200,285 +268,35 @@
     null,
     0
    ],
-   "setExpansion": 1584
+   "setExpansion": 1585
   },
   {
-   "card": "en:bwp-BW53",
-   "name": "Flygon",
-   "rarity": "Rare",
+   "card": "en:xyp-XY14",
+   "name": "Trevenant",
+   "rarity": "Promo",
    "tcgdex": [
-    0,
-    null,
-    null,
-    0
+    552809,
+    "Trevenant [Eerie Wave | Wood Hammer]",
+    4159,
+    1.11
    ],
    "final": [
-    279878,
-    "Flygon [Sand Slammer | Flying Beatdown]",
-    1611,
-    46.28
+    281331,
+    "Trevenant [Eerie Wave | Wood Hammer]",
+    1612,
+    1.75
    ],
-   "setExpansion": 1611,
+   "setExpansion": 1612,
    "entry": [
-    279878,
-    279878
+    281331,
+    281331,
+    289814
    ]
   },
   {
-   "card": "en:xy11-86",
-   "name": "Hydreigon",
-   "rarity": "Rare",
-   "tcgdex": [
-    291547,
-    "Hydreigon BREAK [Calamity Blast]",
-    1716,
-    8.18
-   ],
-   "final": [
-    291647,
-    "Hydreigon [Cruel Fang | Dark Burn]",
-    1716,
-    0.63
-   ],
-   "setExpansion": 1716,
-   "entry": [
-    291647,
-    291647
-   ]
-  },
-  {
-   "card": "en:tk-bw-e-7",
-   "name": "Fighting Energy",
-   "rarity": "None",
-   "tcgdex": [
-    280083,
-    "Darkness Energy",
-    1630,
-    0.16
-   ],
-   "final": [
-    280108,
-    "Fighting Energy",
-    1630,
-    0.34
-   ],
-   "setExpansion": 1630,
-   "entry": [
-    280108,
-    280094,
-    280098,
-    280100,
-    280104,
-    280108,
-    280112,
-    280113,
-    280114,
-    280115,
-    280116,
-    280120,
-    280122
-   ]
-  },
-  {
-   "card": "ja:PMCG1-005",
-   "name": "ニドラン♂",
-   "rarity": "Common",
-   "tcgdex": [
-    0,
-    null,
-    null,
-    0
-   ],
-   "final": [
-    0,
-    null,
-    null,
-    0
-   ],
-   "setExpansion": 4169
-  },
-  {
-   "card": "ja:PMCG4-041",
-   "name": "わるいオコリザル",
-   "rarity": "Uncommon",
-   "tcgdex": [
-    0,
-    null,
-    null,
-    0
-   ],
-   "final": [
-    585118,
-    "Dark Primeape [Frenzy | Frenzied Attack]",
-    4465,
-    1.17
-   ],
-   "setExpansion": 4465,
-   "entry": [
-    585118,
-    585118
-   ]
-  },
-  {
-   "card": "ja:neo4-068",
-   "name": "輝くミュウツー",
-   "rarity": "Rare",
-   "tcgdex": [
-    0,
-    null,
-    null,
-    0
-   ],
-   "final": [
-    0,
-    null,
-    null,
-    0
-   ],
-   "setExpansion": 4509
-  },
-  {
-   "card": "ja:PCG4-091",
-   "name": "Umbreon ex",
+   "card": "ja:PCG6-011",
+   "name": "クロバット（デルタ種）",
    "rarity": "Holo Rare",
-   "tcgdex": [
-    0,
-    null,
-    null,
-    0
-   ],
-   "final": [
-    782796,
-    "Umbreon ex [Darker Ring | Black Cry | Darkness Fang]",
-    5711,
-    594.9
-   ],
-   "setExpansion": 5711,
-   "entry": [
-    782796,
-    782796
-   ]
-  },
-  {
-   "card": "ja:PMCG1-099",
-   "name": "基本水エネルギー",
-   "rarity": "Common",
-   "tcgdex": [
-    0,
-    null,
-    null,
-    0
-   ],
-   "final": [
-    0,
-    null,
-    null,
-    0
-   ],
-   "setExpansion": 4169
-  },
-  {
-   "card": "ja:SV9a-083",
-   "name": "ジャッジマン",
-   "rarity": "None",
-   "tcgdex": [
-    0,
-    null,
-    null,
-    0
-   ],
-   "final": [
-    0,
-    null,
-    null,
-    0
-   ],
-   "setExpansion": 6037
-  },
-  {
-   "card": "ja:web1-047",
-   "name": "ジェンガー",
-   "rarity": "Holo Rare",
-   "tcgdex": [
-    0,
-    null,
-    null,
-    0
-   ],
-   "final": [
-    0,
-    null,
-    null,
-    0
-   ],
-   "setExpansion": 4355
-  },
-  {
-   "card": "ja:PCG3-055",
-   "name": "Furret",
-   "rarity": "Rare",
-   "tcgdex": [
-    0,
-    null,
-    null,
-    0
-   ],
-   "final": [
-    783408,
-    "Furret [Quick Change | Quick Tail Smash]",
-    5712,
-    22.25
-   ],
-   "setExpansion": 5712,
-   "entry": [
-    783408,
-    783408
-   ]
-  },
-  {
-   "card": "ja:PCG2-036",
-   "name": "natu",
-   "rarity": "Common",
-   "tcgdex": [
-    0,
-    null,
-    null,
-    0
-   ],
-   "final": [
-    783568,
-    "Natu [Mirror Coat | Razor Wind]",
-    5713,
-    1.07
-   ],
-   "setExpansion": 5713,
-   "entry": [
-    783568,
-    783568
-   ]
-  },
-  {
-   "card": "ja:PCG4-042",
-   "name": "スローキング",
-   "rarity": "Holo Rare",
-   "tcgdex": [
-    0,
-    null,
-    null,
-    0
-   ],
-   "final": [
-    0,
-    null,
-    null,
-    0
-   ],
-   "setExpansion": 5711
-  },
-  {
-   "card": "ja:PCG6-071",
-   "name": "ホロンのマグナイト",
-   "rarity": "Uncommon",
    "tcgdex": [
     0,
     null,
@@ -494,8 +312,30 @@
    "setExpansion": 5709
   },
   {
-   "card": "ja:PCG3-081",
-   "name": "ロケットの隠れ家",
+   "card": "ja:SV9a-028",
+   "name": "シロナのヒンバス",
+   "rarity": "Common",
+   "tcgdex": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "final": [
+    816681,
+    "Cynthia's Feebas [Undulate]",
+    6037,
+    0.04
+   ],
+   "setExpansion": 6037,
+   "entry": [
+    816681,
+    816681
+   ]
+  },
+  {
+   "card": "ja:neo4-060",
+   "name": "ZなしZ",
    "rarity": "Uncommon",
    "tcgdex": [
     0,
@@ -509,34 +349,12 @@
     null,
     0
    ],
-   "setExpansion": 5712
+   "setExpansion": 4509
   },
   {
-   "card": "ja:SM4p-008",
-   "name": "アマカジ",
-   "rarity": "None",
-   "tcgdex": [
-    560041,
-    "Bounsweet [Sweet Scent | Splash]",
-    3916,
-    0
-   ],
-   "final": [
-    560041,
-    "Bounsweet [Sweet Scent | Splash]",
-    3916,
-    0
-   ],
-   "setExpansion": 3916,
-   "entry": [
-    560041,
-    560041
-   ]
-  },
-  {
-   "card": "ja:SV9a-007",
-   "name": "イシズマイ",
-   "rarity": "Common",
+   "card": "ja:PCG3-012",
+   "name": "ダークアーボック",
+   "rarity": "Rare",
    "tcgdex": [
     0,
     null,
@@ -544,38 +362,20 @@
     0
    ],
    "final": [
-    816660,
-    "Dwebble [Ascension]",
-    6037,
-    0.03
+    783291,
+    "Dark Arbok [Swallow Up | Extra Poison]",
+    5712,
+    5.82
    ],
-   "setExpansion": 6037,
+   "setExpansion": 5712,
    "entry": [
-    816660,
-    816660
+    783291,
+    783291
    ]
   },
   {
-   "card": "ja:SV-P-100",
-   "name": "基本草エネルギー",
-   "rarity": "Promo",
-   "tcgdex": [
-    731904,
-    "Basic Grass Energy",
-    5212,
-    0
-   ],
-   "final": [
-    731904,
-    "Basic Grass Energy",
-    5212,
-    0
-   ],
-   "setExpansion": 5212
-  },
-  {
-   "card": "ja:PCG5-063",
-   "name": "delcatty",
+   "card": "ja:PMCG2-015",
+   "name": "モルフォン",
    "rarity": "Holo Rare",
    "tcgdex": [
     0,
@@ -584,21 +384,21 @@
     0
    ],
    "final": [
-    765293,
-    "Delcatty [Reactive Shift | Energy Link | Tail Whap]",
-    5710,
-    24.91
+    584631,
+    "Venomoth [Shift | Venom Powder]",
+    4463,
+    11.02
    ],
-   "setExpansion": 5710,
+   "setExpansion": 4463,
    "entry": [
-    765293,
-    765293
+    584631,
+    584631
    ]
   },
   {
-   "card": "ja:SVLN-016",
-   "name": "ポケギア3.0",
-   "rarity": "None",
+   "card": "ja:neo1-007",
+   "name": "シャックル",
+   "rarity": "Common",
    "tcgdex": [
     0,
     null,
@@ -611,7 +411,25 @@
     null,
     0
    ],
-   "setExpansion": 5841
+   "setExpansion": 4506
+  },
+  {
+   "card": "ja:SM5p-043",
+   "name": "こだわりハチマキ",
+   "rarity": "None",
+   "tcgdex": [
+    559793,
+    "Choice Band",
+    3901,
+    0
+   ],
+   "final": [
+    559793,
+    "Choice Band",
+    3901,
+    0
+   ],
+   "setExpansion": 3901
   },
   {
    "card": "ja:PMCG1-002",
@@ -636,132 +454,8 @@
    ]
   },
   {
-   "card": "ja:SV-P-176",
-   "name": "基本炎エネルギー",
-   "rarity": "Promo",
-   "tcgdex": [
-    778402,
-    "Basic Fire Energy",
-    5212,
-    0
-   ],
-   "final": [
-    778402,
-    "Basic Fire Energy",
-    5212,
-    0
-   ],
-   "setExpansion": 5212
-  },
-  {
-   "card": "ja:SV-P-163",
-   "name": "ヤンヤンマ",
-   "rarity": "Promo",
-   "tcgdex": [
-    0,
-    null,
-    null,
-    0
-   ],
-   "final": [
-    778391,
-    "Yanma [Silent Wing]",
-    5212,
-    0.58
-   ],
-   "setExpansion": 5212,
-   "entry": [
-    778391,
-    778391
-   ]
-  },
-  {
-   "card": "ja:SM1p-004",
-   "name": "アゴジムシ",
-   "rarity": "None",
-   "tcgdex": [
-    561532,
-    "Grubbin [Vice Grip]",
-    3961,
-    0
-   ],
-   "final": [
-    561532,
-    "Grubbin [Vice Grip]",
-    3961,
-    0
-   ],
-   "setExpansion": 3961,
-   "entry": [
-    561532,
-    561532
-   ]
-  },
-  {
-   "card": "ja:SM5p-038",
-   "name": "アクアパッチ",
-   "rarity": "None",
-   "tcgdex": [
-    559788,
-    "Aqua Patch",
-    3901,
-    0
-   ],
-   "final": [
-    559788,
-    "Aqua Patch",
-    3901,
-    0
-   ],
-   "setExpansion": 3901
-  },
-  {
-   "card": "ja:PCG3-023",
-   "name": "シードラ",
-   "rarity": "Uncommon",
-   "tcgdex": [
-    0,
-    null,
-    null,
-    0
-   ],
-   "final": [
-    783302,
-    "Seadra [Confuse Ray | Aqua Trick]",
-    5712,
-    2.01
-   ],
-   "setExpansion": 5712,
-   "entry": [
-    783302,
-    783302
-   ]
-  },
-  {
-   "card": "ja:SM4p-019",
-   "name": "エンニュート",
-   "rarity": "None",
-   "tcgdex": [
-    560052,
-    "Salazzle [Hot Poison | Flamethrower]",
-    3916,
-    0
-   ],
-   "final": [
-    560052,
-    "Salazzle [Hot Poison | Flamethrower]",
-    3916,
-    0
-   ],
-   "setExpansion": 3916,
-   "entry": [
-    560052,
-    560052
-   ]
-  },
-  {
-   "card": "ja:PCG3-022",
-   "name": "馬",
+   "card": "ja:VS1-004",
+   "name": "フォークナーのドドリオ",
    "rarity": "Common",
    "tcgdex": [
     0,
@@ -775,11 +469,73 @@
     null,
     0
    ],
-   "setExpansion": 5712
+   "setExpansion": 4168
   },
   {
-   "card": "ja:neo1-080",
-   "name": "カードフリップゲーム",
+   "card": "ja:PCG6-063",
+   "name": "Porygon2",
+   "rarity": "Rare",
+   "tcgdex": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "final": [
+    765052,
+    "Porygon2 [Backup | Machine Burst]",
+    5709,
+    1.92
+   ],
+   "setExpansion": 5709,
+   "entry": [
+    765052,
+    765052
+   ]
+  },
+  {
+   "card": "ja:VS1-097",
+   "name": "ランスのカリザード",
+   "rarity": "Common",
+   "tcgdex": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "final": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "setExpansion": 4168
+  },
+  {
+   "card": "ja:SM4p-063",
+   "name": "ヤミラミ",
+   "rarity": "None",
+   "tcgdex": [
+    560096,
+    "Sableye [Limitation | Scratch]",
+    3916,
+    0
+   ],
+   "final": [
+    560096,
+    "Sableye [Limitation | Scratch]",
+    3916,
+    0
+   ],
+   "setExpansion": 3916,
+   "entry": [
+    560096,
+    560096
+   ]
+  },
+  {
+   "card": "ja:neo1-008",
+   "name": "暗闇",
    "rarity": "Uncommon",
    "tcgdex": [
     0,
@@ -796,8 +552,8 @@
    "setExpansion": 4506
   },
   {
-   "card": "ja:neo2-002",
-   "name": "雑草",
+   "card": "ja:PMCG2-037",
+   "name": "イーブイ",
    "rarity": "Common",
    "tcgdex": [
     0,
@@ -806,17 +562,21 @@
     0
    ],
    "final": [
-    0,
-    null,
-    null,
-    0
+    584686,
+    "Eevee [Tail Wag | Quick Attack]",
+    4463,
+    3.11
    ],
-   "setExpansion": 4507
+   "setExpansion": 4463,
+   "entry": [
+    584686,
+    584686
+   ]
   },
   {
-   "card": "ja:PCG8-004",
-   "name": "セレビの星",
-   "rarity": "Shiny rare",
+   "card": "ja:PMCG3-007",
+   "name": "ベトベトン",
+   "rarity": "Holo Rare",
    "tcgdex": [
     0,
     null,
@@ -824,16 +584,86 @@
     0
    ],
    "final": [
+    584704,
+    "Muk [Toxic Gas | Sludge]",
+    4464,
+    8.45
+   ],
+   "setExpansion": 4464,
+   "entry": [
+    584704,
+    584704
+   ]
+  },
+  {
+   "card": "ja:neo2-024",
+   "name": "xatu",
+   "rarity": "Uncommon",
+   "tcgdex": [
     0,
     null,
     null,
     0
    ],
-   "setExpansion": 5700
+   "final": [
+    606565,
+    "Xatu [Energy Cycle | Super Psy]",
+    4507,
+    0.93
+   ],
+   "setExpansion": 4507,
+   "entry": [
+    606565,
+    606565
+   ]
   },
   {
-   "card": "ja:PCG8-038",
-   "name": "バネット",
+   "card": "ja:PMCG3-001",
+   "name": "アーボ",
+   "rarity": "Common",
+   "tcgdex": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "final": [
+    584698,
+    "Ekans [Spit Poison | Wrap]",
+    4464,
+    0.67
+   ],
+   "setExpansion": 4464,
+   "entry": [
+    584698,
+    584698
+   ]
+  },
+  {
+   "card": "ja:PCG8-040",
+   "name": "Dusclops",
+   "rarity": "Rare",
+   "tcgdex": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "final": [
+    762604,
+    "Dusclops [Cursed Glare | Will-o'-the-wisp | Psychic Shield]",
+    5700,
+    5.77
+   ],
+   "setExpansion": 5700,
+   "entry": [
+    762604,
+    762604
+   ]
+  },
+  {
+   "card": "ja:neo3-028",
+   "name": "アンファロス",
    "rarity": "Holo Rare",
    "tcgdex": [
     0,
@@ -847,55 +677,11 @@
     null,
     0
    ],
-   "setExpansion": 5700
+   "setExpansion": 4508
   },
   {
-   "card": "ja:SV-P-002",
-   "name": "ワナイダー",
-   "rarity": "Promo",
-   "tcgdex": [
-    692248,
-    "Spidops [String Truss | Jet Headbutt]",
-    5212,
-    0
-   ],
-   "final": [
-    692248,
-    "Spidops [String Truss | Jet Headbutt]",
-    5212,
-    0
-   ],
-   "setExpansion": 5212,
-   "entry": [
-    692248,
-    692248
-   ]
-  },
-  {
-   "card": "ja:web1-018",
-   "name": "ニドリーノ",
-   "rarity": "Uncommon",
-   "tcgdex": [
-    0,
-    null,
-    null,
-    0
-   ],
-   "final": [
-    571467,
-    "Nidorino [Swift Lunge]",
-    4355,
-    35.25
-   ],
-   "setExpansion": 4355,
-   "entry": [
-    571467,
-    571467
-   ]
-  },
-  {
-   "card": "ja:neo2-034",
-   "name": "幼虫",
+   "card": "ja:VS1-134",
+   "name": "スイッチ",
    "rarity": "Common",
    "tcgdex": [
     0,
@@ -909,11 +695,11 @@
     null,
     0
    ],
-   "setExpansion": 4507
+   "setExpansion": 4168
   },
   {
-   "card": "ja:PCG1-021",
-   "name": "アルカニン",
+   "card": "ja:PCG5-064",
+   "name": "スピンダ",
    "rarity": "Rare",
    "tcgdex": [
     0,
@@ -927,52 +713,11 @@
     null,
     0
    ],
-   "setExpansion": 5714
+   "setExpansion": 5710
   },
   {
-   "card": "ja:MC-398",
-   "name": "ランドロス",
-   "rarity": "None",
-   "tcgdex": [
-    863700,
-    "Landorus [Abundant Harvest | Earthquake]",
-    6381,
-    0
-   ],
-   "final": [
-    863700,
-    "Landorus [Abundant Harvest | Earthquake]",
-    6381,
-    0
-   ],
-   "setExpansion": 6381,
-   "entry": [
-    863700,
-    863699,
-    863700
-   ]
-  },
-  {
-   "card": "ja:SV-P-205",
-   "name": "基本雷エネルギー",
-   "rarity": "Promo",
-   "tcgdex": [
-    807428,
-    "Basic Lightning Energy",
-    5212,
-    0
-   ],
-   "final": [
-    807428,
-    "Basic Lightning Energy",
-    5212,
-    0
-   ],
-   "setExpansion": 5212
-  },
-  {
-   "card": "ja:PCG4-103",
-   "name": "ふわふわベリー",
+   "card": "ja:VS1-111",
+   "name": "ジャスミンのテクニカルマシン01",
    "rarity": "Uncommon",
    "tcgdex": [
     0,
@@ -986,12 +731,244 @@
     null,
     0
    ],
-   "setExpansion": 5711
+   "setExpansion": 4168
   },
   {
-   "card": "ja:PCG6-049",
-   "name": "エスペオン（デルタ種）",
+   "card": "ja:PMCG3-024",
+   "name": "ライチュウ",
    "rarity": "Holo Rare",
+   "tcgdex": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "final": [
+    584721,
+    "Raichu [Gigashock]",
+    4464,
+    41.72
+   ],
+   "setExpansion": 4464,
+   "entry": [
+    584721,
+    584721
+   ]
+  },
+  {
+   "card": "ja:neo3-050",
+   "name": "Delibird",
+   "rarity": "Holo Rare",
+   "tcgdex": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "final": [
+    606724,
+    "Delibird [Present]",
+    4508,
+    25.52
+   ],
+   "setExpansion": 4508,
+   "entry": [
+    606724,
+    606724
+   ]
+  },
+  {
+   "card": "ja:PCG3-051",
+   "name": "ダークサンドスラッシュ",
+   "rarity": "Rare",
+   "tcgdex": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "final": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "setExpansion": 5712
+  },
+  {
+   "card": "ja:PCG5-031",
+   "name": "ハンテイル",
+   "rarity": "Holo Rare",
+   "tcgdex": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "final": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "setExpansion": 5710
+  },
+  {
+   "card": "ja:VS1-002",
+   "name": "フォークナーの恐怖",
+   "rarity": "Common",
+   "tcgdex": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "final": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "setExpansion": 4168
+  },
+  {
+   "card": "ja:SM1p-043",
+   "name": "エネルギーリサイクル",
+   "rarity": "None",
+   "tcgdex": [
+    561571,
+    "Energy Recycler",
+    3961,
+    0
+   ],
+   "final": [
+    561571,
+    "Energy Recycler",
+    3961,
+    0
+   ],
+   "setExpansion": 3961
+  },
+  {
+   "card": "ja:PMCG1-051",
+   "name": "サンド",
+   "rarity": "Common",
+   "tcgdex": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "final": [
+    557702,
+    "Sandshrew [Sand-attack]",
+    4169,
+    0.78
+   ],
+   "setExpansion": 4169,
+   "entry": [
+    557702,
+    557702
+   ]
+  },
+  {
+   "card": "ja:PMCG5-075",
+   "name": "カスミのいかり",
+   "rarity": "Uncommon",
+   "tcgdex": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "final": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "setExpansion": 4466
+  },
+  {
+   "card": "ja:PCG8-053",
+   "name": "タウロス",
+   "rarity": "Holo Rare",
+   "tcgdex": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "final": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "setExpansion": 5700
+  },
+  {
+   "card": "ja:SV-P-181",
+   "name": "基本悪エネルギー",
+   "rarity": "Promo",
+   "tcgdex": [
+    778407,
+    "Basic Darkness Energy",
+    5212,
+    0
+   ],
+   "final": [
+    778407,
+    "Basic Darkness Energy",
+    5212,
+    0
+   ],
+   "setExpansion": 5212
+  },
+  {
+   "card": "ja:PMCG1-087",
+   "name": "ダウジングマシーン",
+   "rarity": "Rare",
+   "tcgdex": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "final": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "setExpansion": 4169
+  },
+  {
+   "card": "ja:MC-233",
+   "name": "ビリリダマex",
+   "rarity": "None",
+   "tcgdex": [
+    863529,
+    "Voltorb ex [Hundred-Hitting Ball]",
+    6381,
+    0
+   ],
+   "final": [
+    863529,
+    "Voltorb ex [Hundred-Hitting Ball]",
+    6381,
+    0
+   ],
+   "setExpansion": 6381,
+   "entry": [
+    863529,
+    863529
+   ]
+  },
+  {
+   "card": "ja:PCG6-028",
+   "name": "Kyogre Star",
+   "rarity": "Shiny rare",
    "tcgdex": [
     0,
     null,
@@ -1007,9 +984,27 @@
    "setExpansion": 5709
   },
   {
-   "card": "ja:SVLS-002",
-   "name": "キュウコン",
+   "card": "ja:SM4p-114",
+   "name": "ダブル無色エネルギー",
    "rarity": "None",
+   "tcgdex": [
+    560147,
+    "Double Colorless Energy",
+    3916,
+    0
+   ],
+   "final": [
+    560147,
+    "Double Colorless Energy",
+    3916,
+    0
+   ],
+   "setExpansion": 3916
+  },
+  {
+   "card": "ja:neo2-052",
+   "name": "Smeargle",
+   "rarity": "Holo Rare",
    "tcgdex": [
     0,
     null,
@@ -1017,38 +1012,38 @@
     0
    ],
    "final": [
-    785513,
-    "Ninetales [Fire Soul]",
-    5842,
-    1.42
+    606593,
+    "Smeargle [Sketch]",
+    4507,
+    22.28
    ],
-   "setExpansion": 5842,
+   "setExpansion": 4507,
    "entry": [
-    785513,
-    785513
+    606593,
+    606593
    ]
   },
   {
-   "card": "ja:SM1p-047",
-   "name": "マルチつけかえ",
-   "rarity": "None",
+   "card": "ja:PCG5-062",
+   "name": "スキッティ",
+   "rarity": "Common",
    "tcgdex": [
-    561575,
-    "Multi Switch",
-    3961,
+    0,
+    null,
+    null,
     0
    ],
    "final": [
-    561575,
-    "Multi Switch",
-    3961,
+    0,
+    null,
+    null,
     0
    ],
-   "setExpansion": 3961
+   "setExpansion": 5710
   },
   {
-   "card": "ja:neo4-043",
-   "name": "ライトジョルテオン",
+   "card": "ja:neo1-039",
+   "name": "Electabuzz",
    "rarity": "Uncommon",
    "tcgdex": [
     0,
@@ -1057,100 +1052,67 @@
     0
    ],
    "final": [
+    606439,
+    "Electabuzz [Punch | Swift]",
+    4506,
+    2.12
+   ],
+   "setExpansion": 4506,
+   "entry": [
+    606439,
+    606439
+   ]
+  },
+  {
+   "card": "ja:SM1p-024",
+   "name": "オドリドリ",
+   "rarity": "None",
+   "tcgdex": [
+    561552,
+    "Oricorio [Supernatural Dance | Revelation Dance]",
+    3961,
+    0
+   ],
+   "final": [
+    561552,
+    "Oricorio [Supernatural Dance | Revelation Dance]",
+    3961,
+    0
+   ],
+   "setExpansion": 3961,
+   "entry": [
+    561552,
+    561538,
+    561550,
+    561551,
+    561552
+   ]
+  },
+  {
+   "card": "ja:PMCG3-037",
+   "name": "ゴローン",
+   "rarity": "Uncommon",
+   "tcgdex": [
     0,
     null,
     null,
     0
    ],
-   "setExpansion": 4509
-  },
-  {
-   "card": "ja:SVLN-002",
-   "name": "サンダー",
-   "rarity": "None",
-   "tcgdex": [
-    0,
-    null,
-    null,
-    0
-   ],
    "final": [
-    785469,
-    "Zapdos [Follow-Up Bolt | Drill Peck]",
-    5841,
-    1.3
+    584734,
+    "Graveler [Harden | Rock Throw]",
+    4464,
+    1.89
    ],
-   "setExpansion": 5841,
+   "setExpansion": 4464,
    "entry": [
-    785469,
-    785469
+    584734,
+    584734
    ]
   },
   {
-   "card": "ja:SM4p-010",
-   "name": "アマージョ",
-   "rarity": "None",
-   "tcgdex": [
-    560043,
-    "Tsareena [Queenly Majesty | Trop Kick]",
-    3916,
-    0
-   ],
-   "final": [
-    560043,
-    "Tsareena [Queenly Majesty | Trop Kick]",
-    3916,
-    0
-   ],
-   "setExpansion": 3916,
-   "entry": [
-    560043,
-    560043
-   ]
-  },
-  {
-   "card": "ja:SM4p-092",
-   "name": "ネストボール",
-   "rarity": "None",
-   "tcgdex": [
-    560125,
-    "Nest Ball",
-    3916,
-    0
-   ],
-   "final": [
-    560125,
-    "Nest Ball",
-    3916,
-    0
-   ],
-   "setExpansion": 3916
-  },
-  {
-   "card": "ja:SM4A-002",
-   "name": "コクーン",
-   "rarity": "Common",
-   "tcgdex": [
-    560247,
-    "Beedrill [Sudden Sting | Sharp Sting]",
-    3921,
-    0.3
-   ],
-   "final": [
-    560248,
-    "Kakuna [Multiply]",
-    3921,
-    0.23
-   ],
-   "setExpansion": 3921,
-   "entry": [
-    560248,
-    560248
-   ]
-  },
-  {
-   "card": "ja:VS1-035",
-   "name": "チャックのライドン",
+   "card": "ja:VS1-054",
+   "name": "Surge's Lanturn中t",
    "rarity": "Common",
    "tcgdex": [
     0,
@@ -1165,6 +1127,87 @@
     0
    ],
    "setExpansion": 4168
+  },
+  {
+   "card": "ja:PCG4-034",
+   "name": "ジョルテオン",
+   "rarity": "Holo Rare",
+   "tcgdex": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "final": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "setExpansion": 5711
+  },
+  {
+   "card": "ja:SM1p-050",
+   "name": "月輪の祭壇",
+   "rarity": "None",
+   "tcgdex": [
+    561578,
+    "Altar of the Moone",
+    3961,
+    0
+   ],
+   "final": [
+    561578,
+    "Altar of the Moone",
+    3961,
+    0
+   ],
+   "setExpansion": 3961
+  },
+  {
+   "card": "ja:M-P-137",
+   "name": "メガエルレイドex",
+   "rarity": "Promo",
+   "tcgdex": [
+    899442,
+    "Mega Gallade ex [Gale Slash | Marvelous Edge]",
+    6230,
+    0
+   ],
+   "final": [
+    899442,
+    "Mega Gallade ex [Gale Slash | Marvelous Edge]",
+    6230,
+    0
+   ],
+   "setExpansion": 6230,
+   "entry": [
+    899442,
+    864280,
+    899442
+   ]
+  },
+  {
+   "card": "ja:SVLN-004",
+   "name": "マリルリ",
+   "rarity": "None",
+   "tcgdex": [
+    0,
+    null,
+    null,
+    0
+   ],
+   "final": [
+    785471,
+    "Azumarill [Glistening Bubbles | Double-Edge]",
+    5841,
+    0.81
+   ],
+   "setExpansion": 5841,
+   "entry": [
+    785471,
+    785471
+   ]
   }
  ]
 }
